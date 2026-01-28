@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grundrechte Kids - Podcast Werkstatt</title>
+    <meta name="description" content="Eine interaktive Web-App für Grundschüler zum Lernen der Grundrechte und Erstellen von Podcast-Skripten." />
+    <meta name="theme-color" content="#ffffff" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background-color: #f8fafc; /* slate-50 */
+      }
+      /* On Screen: Look like a paper sheet */
+      @media screen {
+        .paper-sheet {
+           max-width: 210mm;
+           min-height: 297mm;
+           margin: 2rem auto;
+           background: white;
+           padding: 2cm;
+           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+      }
+      /* On Print: Remove margins, shadows, and navigation */
+      @media print {
+        @page { 
+          size: A4; 
+          margin: 2cm; 
+        }
+        .no-print { display: none !important; }
+        body { 
+          background: white; 
+          -webkit-print-color-adjust: exact; 
+          print-color-adjust: exact;
+        }
+        .paper-sheet {
+           width: 100%;
+           margin: 0;
+           padding: 0;
+           box-shadow: none;
+           min-height: auto;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "canvas-confetti": "https://esm.sh/canvas-confetti@^1.9.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
