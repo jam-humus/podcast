@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { PodcastTopic, PodcastProject, ScriptCardData, CardType, StarterOption, Badge, WordDef } from '../types';
+import { useState, useRef, useEffect, ReactNode } from 'react';
+import { PodcastTopic, PodcastProject, ScriptCardData, StarterOption, Badge, WordDef } from '../types';
 import { SCRIPT_TEMPLATE, BADGES } from '../constants';
-import { Save, Info, User, CheckCircle2, ChevronRight, ArrowLeft, Mic, X, Sparkles, MessageSquare, Lightbulb, PenTool, Trophy, Star, Medal, BookOpen, Search, Wand2 } from 'lucide-react';
+import { Save, CheckCircle2, ChevronRight, ArrowLeft, Mic, X, Sparkles, MessageSquare, Lightbulb, PenTool, Trophy, BookOpen, Search, Wand2 } from 'lucide-react';
 
 interface Props {
   project: PodcastProject;
@@ -12,7 +12,7 @@ interface Props {
 }
 
 // --- Knowledge Components ---
-const InfoBox: React.FC<{ title: string; icon: string; color: string; children: React.ReactNode }> = ({ title, icon, color, children }) => (
+const InfoBox = ({ title, icon, color, children }: { title: string; icon: string; color: string; children: ReactNode }) => (
   <div className={`p-4 rounded-xl border-2 ${color} mb-3 shadow-sm bg-white`}>
     <h4 className="font-bold text-slate-800 mb-2 flex items-center gap-2 text-sm uppercase tracking-wider">
       <span>{icon}</span> {title}
@@ -24,7 +24,7 @@ const InfoBox: React.FC<{ title: string; icon: string; color: string; children: 
 );
 
 // --- Time Bar Component ---
-const TimeTracker: React.FC<{ totalWords: number }> = ({ totalWords }) => {
+const TimeTracker = ({ totalWords }: { totalWords: number }) => {
   const wordsPerMinute = 75; 
   const currentMinutes = totalWords / wordsPerMinute;
   const percentage = Math.min(100, (currentMinutes / 6) * 100);
@@ -51,7 +51,7 @@ const TimeTracker: React.FC<{ totalWords: number }> = ({ totalWords }) => {
 };
 
 // --- Gamification Components ---
-const ScoreBoard: React.FC<{ score: number, recentGain: number }> = ({ score, recentGain }) => {
+const ScoreBoard = ({ score, recentGain }: { score: number, recentGain: number }) => {
   const [displayScore, setDisplayScore] = useState(score);
   
   useEffect(() => {
@@ -77,7 +77,7 @@ const ScoreBoard: React.FC<{ score: number, recentGain: number }> = ({ score, re
   );
 };
 
-const BadgeToast: React.FC<{ badge: Badge, onClose: () => void }> = ({ badge, onClose }) => {
+const BadgeToast = ({ badge, onClose }: { badge: Badge, onClose: () => void }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 4000);
     return () => clearTimeout(timer);
@@ -97,7 +97,7 @@ const BadgeToast: React.FC<{ badge: Badge, onClose: () => void }> = ({ badge, on
   );
 };
 
-export const ScriptBuilder: React.FC<Props> = ({ project, topic, onUpdateScript, onFinish, onBack }) => {
+export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack }: Props) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   
   // State

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { PodcastTopic, PodcastProject, CaseCard, CheckCard } from '../types';
-import { ChevronRight, CheckCircle2, XCircle, Award, ArrowRight, BookOpen, Star, Sparkles, BrainCircuit, ThumbsUp, ThumbsDown, HelpCircle } from 'lucide-react';
+import { useState } from 'react';
+import { PodcastTopic, PodcastProject } from '../types';
+import { CheckCircle2, XCircle, Award, ArrowRight, BookOpen, Star, Sparkles, BrainCircuit, ThumbsUp, ThumbsDown, HelpCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
   onBack: () => void;
 }
 
-export const LessonView: React.FC<Props> = ({ project, topic, mode, onCompleteLesson, onBack }) => {
+export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: Props) => {
   // Mode determines initial step
   const [step, setStep] = useState<'intro' | 'quiz' | 'cases' | 'checks' | 'finished'>(mode === 'basics' ? 'intro' : 'cases');
   

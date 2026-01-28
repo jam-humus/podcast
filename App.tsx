@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PodcastProject, PodcastTopic, RightId, ScriptCardData } from './types';
 import { TOPICS, SCRIPT_TEMPLATE, BADGES, GENERAL_INTRO, LEVELS } from './constants';
 import { ScriptBuilder } from './components/ScriptBuilder';
 import { LessonView } from './components/LessonView';
 import { PDFPreview } from './services/pdfService';
-import { Mic, Users, ArrowRight, Sparkles, RotateCcw, BookOpen, Lock, PenTool, CheckCircle2, BrainCircuit, Scale, Book, Star } from 'lucide-react';
+import { Mic, Users, ArrowRight, RotateCcw, BookOpen, PenTool, CheckCircle2, BrainCircuit, Scale, Star } from 'lucide-react';
 
 type ViewState = 'topic-select' | 'team-input' | 'dashboard' | 'intro-mission' | 'lesson-a' | 'lesson-b' | 'workshop' | 'print';
 

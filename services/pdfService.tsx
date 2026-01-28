@@ -1,7 +1,6 @@
-import React from 'react';
 import { PodcastProject, PodcastTopic } from '../types';
 import { BADGES } from '../constants';
-import { Printer, ArrowLeft, Download } from 'lucide-react';
+import { Printer, ArrowLeft } from 'lucide-react';
 
 interface Props {
   project: PodcastProject;
@@ -10,7 +9,7 @@ interface Props {
   onPrint: () => void;
 }
 
-export const PDFPreview: React.FC<Props> = ({ project, topic, onBack, onPrint }) => {
+export const PDFPreview = ({ project, topic, onBack, onPrint }: Props) => {
   const earnedBadges = BADGES.filter(b => project.unlockedBadges?.includes(b.id));
 
   return (
