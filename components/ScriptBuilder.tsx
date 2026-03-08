@@ -305,6 +305,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
 
   // Audio State
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [simpleMode, setSimpleMode] = useState(false);
 
   // Init Voices to ensure they are loaded (Chrome fix)
   useEffect(() => {
@@ -506,6 +507,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
 
   const totalWords = cards.reduce((acc, c) => acc + countWords(c.text), 0);
   const currentWordCount = countWords(activeCard.text);
+  const completedCardCount = cards.filter(c => countWords(c.text) >= c.minWords).length;
   const isShort = currentWordCount < activeCard.minWords;
   const hasStarted = currentWordCount > 5; // Only suggest if they wrote at least something
   
@@ -541,6 +543,12 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
           </div>
         </div>
         <div className="flex items-center gap-4">
+           <button
+             onClick={() => setSimpleMode(prev => !prev)}
+             className={`px-3 py-2 rounded-xl font-bold border-2 transition-all ${simpleMode ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'}`}
+           >
+             {simpleMode ? 'Profi-Modus' : 'Einfacher Modus'}
+           </button>
            <ScoreBoard score={score} recentGain={recentScoreGain} />
            <TimeTracker totalWords={totalWords} />
            <button 
@@ -556,6 +564,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
       <div className="flex-1 flex overflow-hidden">
         
         {/* COLUMN 1: NAVIGATION (Storyboard Filmstrip) */}
+        {!simpleMode && (
         <div className="w-72 bg-slate-50 border-r-4 border-slate-200 overflow-y-auto p-4 space-y-4 hidden md:block">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Ablaufplan (Storyboard)</h3>
           {cards.map((card, idx) => {
@@ -584,13 +593,28 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
              );
           })}
         </div>
+        )}
 
         {/* COLUMN 2: EDITOR (Main Stage) */}
         <div className="flex-1 flex flex-col min-w-0 bg-slate-100 relative">
            
            <div className="flex-1 p-4 md:p-6 flex flex-col h-full max-w-4xl mx-auto w-full">
+             <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 mb-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2 text-sm font-bold text-slate-500">
+                  <span>Teil {activeCardIdx + 1} von {cards.length}</span>
+                  <span>{completedCardCount}/{cards.length} fertig</span>
+                </div>
+                <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-500"
+                    style={{ width: `${(completedCardCount / cards.length) * 100}%` }}
+                  />
+                </div>
+                <div className="mt-2 text-lg font-black text-slate-800">Aktuell: {activeCard.title}</div>
+             </div>
              
              {/* Dynamic Director Note (Regie-Anweisung) */}
+             {!simpleMode && (
              <div className="bg-sky-50 border-2 border-sky-100 rounded-2xl p-4 mb-4 flex gap-4 shadow-sm items-start animate-in fade-in slide-in-from-top-2">
                 <div className="bg-sky-200 text-sky-800 w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0 font-black border-4 border-sky-50">
                    {cardHelper.icon}
@@ -609,13 +633,17 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                    </ul>
                 </div>
              </div>
+             )}
 
              {/* Speaker Role Tips */}
+             {!simpleMode && (
              <SpeakerRoleHelp type={activeCard.type} />
+             )}
 
              {/* Toolbar */}
              <div className="bg-white rounded-t-3xl border-2 border-slate-200 border-b-0 p-4 flex items-center justify-between gap-4 shadow-sm z-10 mt-2">
                 {/* Speakers - GAMIFIED TOKENS */}
+                {!simpleMode && (
                 <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
                   {['A', 'B', 'C', 'D', 'E'].map(speaker => (
                     <button 
@@ -630,6 +658,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                   ))}
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Sprecher wählen</span>
                 </div>
+                )}
 
                 <div className="flex gap-2">
                     
@@ -670,8 +699,10 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
              <div className="flex-1 bg-white border-2 border-slate-200 rounded-b-3xl shadow-sm relative flex flex-col">
                 <textarea 
                   ref={textAreaRef}
-                  className="flex-1 w-full h-full p-8 text-2xl leading-loose resize-none focus:outline-none font-medium text-slate-800 bg-[url('https://www.transparenttextures.com/patterns/notebook.png')] placeholder-slate-300 rounded-b-3xl"
-                  placeholder={`Hier schreibt ihr euren Text für "${activeCard.title}"...\n\nTipp: Klickt oben rechts auf "Hilfe & Wörter", wenn ihr Hilfe braucht!`}
+                  className={`flex-1 w-full h-full p-8 ${simpleMode ? 'text-xl leading-relaxed' : 'text-2xl leading-loose'} resize-none focus:outline-none font-medium text-slate-800 bg-[url('https://www.transparenttextures.com/patterns/notebook.png')] placeholder-slate-300 rounded-b-3xl`}
+                  placeholder={simpleMode
+                    ? `Schreibt hier euren Text für "${activeCard.title}".`
+                    : `Hier schreibt ihr euren Text für "${activeCard.title}"...\n\nTipp: Klickt oben rechts auf "Hilfe & Wörter", wenn ihr Hilfe braucht!`}
                   value={activeCard.text}
                   onChange={(e) => updateCardText(e.target.value)}
                   spellCheck={false}
@@ -707,6 +738,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
         </div>
 
         {/* COLUMN 3: RIGHT TOOLBOX (Glossary & Info) - Visible only on large screens */}
+        {!simpleMode && (
         <div className="w-80 bg-slate-50 border-l-4 border-slate-200 overflow-y-auto p-4 hidden xl:block">
            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Hilfsmittel</h3>
            
@@ -758,6 +790,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
              </InfoBox>
            </div>
         </div>
+        )}
       </div>
 
       {/* --- MODAL: WORD DEFINITION --- */}

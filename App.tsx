@@ -27,6 +27,7 @@ export default function App() {
   const [view, setView] = useState<ViewState>(project ? 'dashboard' : 'topic-select');
   const [selectedTopicId, setSelectedTopicId] = useState<RightId | null>(project?.topicId || null);
   const [tempTeamName, setTempTeamName] = useState('');
+  const [showResetPrompt, setShowResetPrompt] = useState(false);
 
   useEffect(() => {
     if (project) {
@@ -128,13 +129,12 @@ export default function App() {
   const handlePrint = () => window.print();
 
   const handleReset = () => {
-    if (confirm('Wirklich alles löschen? Dein aktuelles Team und alle Punkte gehen verloren.')) {
-      setProject(null);
-      localStorage.removeItem('podcastProject');
-      setSelectedTopicId(null);
-      setTempTeamName('');
-      setView('topic-select');
-    }
+    setProject(null);
+    localStorage.removeItem('podcastProject');
+    setSelectedTopicId(null);
+    setTempTeamName('');
+    setView('topic-select');
+    setShowResetPrompt(false);
   };
 
   // --- Views ---
@@ -464,10 +464,35 @@ export default function App() {
 
       {(view === 'dashboard' || view === 'topic-select' || view === 'team-input') && project && (
          <div className="fixed bottom-4 right-4 z-50">
-           <button onClick={handleReset} className="text-xs font-bold text-red-300 hover:text-red-500 flex items-center gap-1 bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all border-2 border-red-50">
+           <button onClick={() => setShowResetPrompt(true)} className="text-xs font-bold text-red-300 hover:text-red-500 flex items-center gap-1 bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all border-2 border-red-50">
              <RotateCcw size={14}/> Neustart
            </button>
          </div>
+      )}
+
+      {showResetPrompt && project && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-3xl border-4 border-red-100 p-6 shadow-2xl">
+            <h3 className="text-2xl font-black text-slate-800 mb-2">Wirklich neu starten?</h3>
+            <p className="text-slate-600 font-medium mb-6">
+              Team „{project.teamName}“ und alle Punkte werden gelöscht.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetPrompt(false)}
+                className="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl border-2 border-slate-200 hover:bg-slate-200"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleReset}
+                className="flex-1 bg-red-500 text-white font-black py-3 rounded-xl border-b-4 border-red-700 hover:bg-red-400 active:border-b-0 active:translate-y-1"
+              >
+                Ja, löschen
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
