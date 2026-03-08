@@ -63,6 +63,7 @@ export default function App() {
       dateCreated: new Date().toISOString(),
       score: 0,
       unlockedBadges: [],
+      speakerCount: 3,
       introCompleted: false, 
       lessonA_Done: false,
       lessonB_Done: false
@@ -113,13 +114,14 @@ export default function App() {
     setTimeout(() => setView('dashboard'), 2000); 
   };
 
-  const handleUpdateScript = (newScript: ScriptCardData[], newScore: number, newBadges: string[]) => {
+  const handleUpdateScript = (newScript: ScriptCardData[], newScore: number, newBadges: string[], newSpeakerCount?: number) => {
     if (project) {
       setProject({ 
         ...project, 
         script: newScript,
         score: newScore,
-        unlockedBadges: newBadges
+        unlockedBadges: newBadges,
+        speakerCount: newSpeakerCount ?? project.speakerCount ?? 3
       });
     }
   };

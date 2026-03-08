@@ -91,6 +91,7 @@ export interface PodcastProject {
   dateCreated: string;
   score: number;
   unlockedBadges: string[];
+  speakerCount: number;
   // Fortschritt
   introCompleted: boolean; // NEU: Grundgesetz-Basiswissen
   lessonA_Done: boolean; // Basis-Wissen Thema

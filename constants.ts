@@ -4,7 +4,7 @@ import { PodcastTopic, RightId, CardType, StarterOption, Badge, TopicLesson } fr
 const countWords = (text: string) => {
   if (!text) return 0;
   // Remove "Sprecher X:" patterns
-  const clean = text.replace(/Sprecher\s+[A-E]:/gi, '').trim();
+  const clean = text.replace(/Sprecher\s+[A-Z]:/gi, '').trim();
   return clean ? clean.split(/\s+/).length : 0;
 };
 

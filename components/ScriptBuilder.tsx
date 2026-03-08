@@ -6,7 +6,7 @@ import { Save, CheckCircle2, ChevronRight, ArrowLeft, Mic, X, Sparkles, MessageS
 interface Props {
   project: PodcastProject;
   topic: PodcastTopic;
-  onUpdateScript: (newScript: ScriptCardData[], newScore: number, newBadges: string[]) => void;
+  onUpdateScript: (newScript: ScriptCardData[], newScore: number, newBadges: string[], newSpeakerCount?: number) => void;
   onFinish: () => void;
   onBack: () => void;
 }
@@ -117,12 +117,17 @@ const SPEAKER_TIPS: Record<CardType, { [key: string]: string }> = {
   }
 };
 
+const SPEAKER_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
 const COLORS_FOR_SPEAKERS: Record<string, string> = {
     A: "bg-red-100 text-red-700 border-red-300",
     B: "bg-blue-100 text-blue-700 border-blue-300",
     C: "bg-green-100 text-green-700 border-green-300",
     D: "bg-yellow-100 text-yellow-700 border-yellow-300",
-    E: "bg-purple-100 text-purple-700 border-purple-300"
+    E: "bg-purple-100 text-purple-700 border-purple-300",
+    F: "bg-pink-100 text-pink-700 border-pink-300",
+    G: "bg-cyan-100 text-cyan-700 border-cyan-300",
+    H: "bg-orange-100 text-orange-700 border-orange-300"
 };
 
 // --- Knowledge Components ---
@@ -137,7 +142,7 @@ const InfoBox = ({ title, icon, color, children }: { title: string; icon: string
   </div>
 );
 
-const SpeakerRoleHelp = ({ type }: { type: CardType }) => {
+const SpeakerRoleHelp = ({ type, speakers }: { type: CardType; speakers: string[] }) => {
   const tips = SPEAKER_TIPS[type];
   if (!tips) return null;
 
@@ -146,15 +151,19 @@ const SpeakerRoleHelp = ({ type }: { type: CardType }) => {
       <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2">
         <Users size={14} /> Wer sagt was? (Ideen)
       </h4>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {Object.entries(tips).map(([speaker, tip]) => (
-          <div key={speaker} className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col gap-2">
-            <div className={`w-8 h-8 rounded-full font-bold text-sm flex items-center justify-center shrink-0 border-2 ${COLORS_FOR_SPEAKERS[speaker]}`}>
-              {speaker}
+      <div className={`grid grid-cols-1 ${speakers.length > 1 ? 'sm:grid-cols-2' : ''} ${speakers.length > 2 ? 'lg:grid-cols-3' : ''} gap-3`}>
+        {speakers.map((speaker, index) => {
+          const fallback = `Übernimm Teil ${index + 1} oder den nächsten freien Satz.`;
+          const tip = tips[speaker] || fallback;
+          return (
+            <div key={speaker} className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col gap-2">
+              <div className={`w-8 h-8 rounded-full font-bold text-sm flex items-center justify-center shrink-0 border-2 ${COLORS_FOR_SPEAKERS[speaker] || 'bg-slate-100 text-slate-700 border-slate-300'}`}>
+                {speaker}
+              </div>
+              <p className="text-xs text-slate-600 font-medium leading-snug">{tip}</p>
             </div>
-            <p className="text-xs text-slate-600 font-medium leading-snug">{tip}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -235,6 +244,13 @@ const BadgeToast = ({ badge, onClose }: { badge: Badge, onClose: () => void }) =
 
 export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack }: Props) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  interface QualityCheck {
+    id: string;
+    label: string;
+    passed: boolean;
+    hint: string;
+  }
   
   // State
   const [cards, setCards] = useState<ScriptCardData[]>(() => {
@@ -249,8 +265,127 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   const countWords = (text: string) => {
       if (!text) return 0;
       // Remove "Sprecher X:" patterns
-      const clean = text.replace(/Sprecher\s+[A-E]:/gi, '').trim();
+      const clean = text.replace(/Sprecher\s+[A-Z]:/gi, '').trim();
       return clean ? clean.split(/\s+/).length : 0;
+  };
+
+  const normalizeText = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/ä/g, 'ae')
+      .replace(/ö/g, 'oe')
+      .replace(/ü/g, 'ue')
+      .replace(/ß/g, 'ss');
+
+  const tokenize = (text: string) =>
+    normalizeText(text)
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean);
+
+  const buildWordVariants = (word: string) => {
+    const base = normalizeText(word);
+    const stem = base.length > 4 ? base.slice(0, -1) : base;
+    const variants = new Set([
+      base,
+      stem,
+      `${base}e`,
+      `${base}en`,
+      `${base}er`,
+      `${base}n`,
+      `${base}s`
+    ]);
+    return [...variants].filter(v => v.length > 2);
+  };
+
+  const hasGlossaryWord = (text: string, glossaryWord: string) => {
+    const tokens = tokenize(text);
+    const variants = buildWordVariants(glossaryWord);
+    return tokens.some(token => variants.some(variant => token === variant || token.startsWith(variant)));
+  };
+
+  const hasGlossaryContext = (text: string, glossaryWord: string) => {
+    const contextWords = ['bedeutet', 'heisst', 'ist', 'gilt', 'schuetzt', 'regel', 'recht', 'wichtig'];
+    return text
+      .split(/[.!?]/)
+      .map(sentence => normalizeText(sentence))
+      .some(sentence => hasGlossaryWord(sentence, glossaryWord) && contextWords.some(ctx => sentence.includes(ctx)));
+  };
+
+  const analyzeCardQuality = (card: ScriptCardData): QualityCheck[] => {
+    const normalized = normalizeText(card.text);
+    const checks: QualityCheck[] = [];
+
+    if (card.type === 'boundary') {
+      checks.push({
+        id: 'boundary-signal',
+        label: 'Klare Grenze genannt',
+        passed: /\b(aber|nicht|stopp|grenze|endet)\b/.test(normalized),
+        hint: 'Formuliere eine klare Grenze, z. B. „Stopp heißt Stopp“.'
+      });
+      checks.push({
+        id: 'boundary-reason',
+        label: 'Begründung erklärt',
+        passed: /\b(weil|damit|sonst|wehtut|verletzt)\b/.test(normalized),
+        hint: 'Erklärt kurz, warum die Grenze wichtig ist.'
+      });
+    }
+
+    if (card.type === 'example') {
+      checks.push({
+        id: 'example-scene',
+        label: 'Konkrete Situation beschrieben',
+        passed: /\b(zum beispiel|stellt euch vor|gestern|heute|in der schule|im alltag)\b/.test(normalized),
+        hint: 'Beschreibt eine klare Alltagsszene (Ort + was passiert).'
+      });
+      checks.push({
+        id: 'example-emotion',
+        label: 'Gefühle eingebaut',
+        passed: /\b(traurig|wuetend|angst|freut|erschrocken|unsicher|gluecklich)\b/.test(normalized),
+        hint: 'Ergänzt Gefühle der Beteiligten (z. B. traurig, wütend, erleichtert).'
+      });
+    }
+
+    if (card.type === 'outro') {
+      checks.push({
+        id: 'outro-summary',
+        label: 'Zusammenfassung enthalten',
+        passed: /\b(merkt euch|wichtigste|zusammengefasst|fazit)\b/.test(normalized),
+        hint: 'Fasst die Kernbotschaft in einem Satz zusammen.'
+      });
+      checks.push({
+        id: 'outro-farewell',
+        label: 'Verabschiedung enthalten',
+        passed: /\b(tschuess|danke|bis bald|zuhoeren)\b/.test(normalized),
+        hint: 'Fügt eine klare Verabschiedung ein (z. B. Danke fürs Zuhören).'
+      });
+    }
+
+    if (card.type === 'explanation') {
+      checks.push({
+        id: 'explanation-merksatz',
+        label: 'Merksatz/Schlüsselidee eingebunden',
+        passed: tokenize(topic.keySentence).some(word => word.length > 4 && normalized.includes(word)),
+        hint: 'Nutzt Wörter aus dem Merksatz, damit die Erklärung eindeutig ist.'
+      });
+      checks.push({
+        id: 'explanation-glossary',
+        label: 'Glossarbegriff im Kontext erklärt',
+        passed: topic.wordBank.some(word => hasGlossaryContext(card.text, word.word)),
+        hint: 'Erklärt mindestens einen Glossarbegriff in einem vollständigen Satz.'
+      });
+    }
+
+    return checks;
+  };
+
+  const getQualityScore = (currentCards: ScriptCardData[]) => {
+    const allChecks = currentCards.flatMap(card => analyzeCardQuality(card));
+    return allChecks.filter(check => check.passed).length * 20;
+  };
+
+  const getUsedGlossaryCount = (currentCards: ScriptCardData[]) => {
+    const fullText = currentCards.map(c => c.text).join(' ');
+    return topic.wordBank.filter(word => hasGlossaryContext(fullText, word.word)).length;
   };
 
   // Helper: Calculate Script Score based on cards AND glossary usage
@@ -268,13 +403,13 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
     }).length;
     scriptScore += completedCards * 50;
 
-    // 3. NEW: Points for Glossary Words (30 points per unique word used)
-    const fullText = currentCards.map(c => c.text).join(' ').toLowerCase();
-    const usedGlossaryCount = topic.wordBank.filter(wb => 
-      fullText.includes(wb.word.toLowerCase())
-    ).length;
+    // 3. Points for Glossary Words with context (30 points per unique word)
+    const usedGlossaryCount = getUsedGlossaryCount(currentCards);
     
     scriptScore += usedGlossaryCount * 30;
+
+    // 4. Points for quality checks
+    scriptScore += getQualityScore(currentCards);
 
     return scriptScore;
   };
@@ -306,6 +441,9 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   // Audio State
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [simpleMode, setSimpleMode] = useState(false);
+  const [speakerCount, setSpeakerCount] = useState(() => Math.min(8, Math.max(2, project.speakerCount || 3)));
+
+  const activeSpeakers = SPEAKER_LABELS.slice(0, speakerCount);
 
   // Init Voices to ensure they are loaded (Chrome fix)
   useEffect(() => {
@@ -382,7 +520,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
            setNewBadge(badge);
            setUnlockedBadges(prev => [...prev, badge.id]);
            // Trigger update parent immediately for the badge
-           onUpdateScript(currentCards, score, [...currentUnlocked, badge.id]); 
+           onUpdateScript(currentCards, score, [...currentUnlocked, badge.id], speakerCount); 
         }
      });
   };
@@ -406,7 +544,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
     checkBadges(newCards, unlockedBadges);
 
     // Propagate
-    onUpdateScript(newCards, totalScore, unlockedBadges);
+    onUpdateScript(newCards, totalScore, unlockedBadges, speakerCount);
   };
 
   const insertText = (textToInsert: string) => {
@@ -505,6 +643,13 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   };
 
 
+
+  const handleSpeakerCountChange = (newCount: number) => {
+    const bounded = Math.min(8, Math.max(2, newCount));
+    setSpeakerCount(bounded);
+    onUpdateScript(cards, score, unlockedBadges, bounded);
+  };
+
   const totalWords = cards.reduce((acc, c) => acc + countWords(c.text), 0);
   const currentWordCount = countWords(activeCard.text);
   const completedCardCount = cards.filter(c => countWords(c.text) >= c.minWords).length;
@@ -513,7 +658,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   
   const canMagicExtend = getAutoSuggestion() !== null; 
 
-  const allScriptText = cards.map(c => c.text).join(' ').toLowerCase();
+  const allScriptText = cards.map(c => c.text).join(' ');
 
   // Close modal logic
   const closeModal = () => {
@@ -523,6 +668,8 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   };
 
   const contentIdeas = getContentIdeas();
+  const activeCardChecks = analyzeCardQuality(activeCard);
+  const missingChecks = activeCardChecks.filter(check => !check.passed);
 
   return (
     <div className="h-screen flex flex-col bg-slate-100 font-sans selection:bg-yellow-200">
@@ -549,6 +696,19 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
            >
              {simpleMode ? 'Profi-Modus' : 'Einfacher Modus'}
            </button>
+           <label className="flex items-center gap-2 bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-600">
+             <Users size={16} className="text-slate-400" />
+             Sprecher
+             <select
+               value={speakerCount}
+               onChange={(e) => handleSpeakerCountChange(Number(e.target.value))}
+               className="bg-transparent border-none focus:ring-0 text-sm font-black text-slate-800"
+             >
+               {Array.from({ length: 7 }, (_, idx) => idx + 2).map(count => (
+                 <option key={count} value={count}>{count}</option>
+               ))}
+             </select>
+           </label>
            <ScoreBoard score={score} recentGain={recentScoreGain} />
            <TimeTracker totalWords={totalWords} />
            <button 
@@ -637,7 +797,27 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
 
              {/* Speaker Role Tips */}
              {!simpleMode && (
-             <SpeakerRoleHelp type={activeCard.type} />
+             <SpeakerRoleHelp type={activeCard.type} speakers={activeSpeakers} />
+             )}
+
+             {!simpleMode && activeCardChecks.length > 0 && (
+               <div className="bg-white border-2 border-amber-100 rounded-2xl p-4 mb-4 shadow-sm">
+                 <h4 className="text-xs font-black text-amber-500 uppercase tracking-widest mb-3">Qualitäts-Check</h4>
+                 <div className="space-y-2">
+                   {activeCardChecks.map(check => (
+                     <div
+                       key={check.id}
+                       className={`rounded-xl border px-3 py-2 text-sm ${check.passed ? 'bg-green-50 border-green-200 text-green-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}
+                     >
+                       <div className="font-bold flex items-center gap-2">{check.passed ? '✅' : '⚠️'} {check.label}</div>
+                       {!check.passed && <div className="text-xs mt-1">Fehlt noch: {check.hint}</div>}
+                     </div>
+                   ))}
+                 </div>
+                 {missingChecks.length === 0 && (
+                   <p className="text-xs text-green-700 font-bold mt-3">Stark! Diese Karte erfüllt alle Qualitätskriterien.</p>
+                 )}
+               </div>
              )}
 
              {/* Toolbar */}
@@ -645,18 +825,18 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                 {/* Speakers - GAMIFIED TOKENS */}
                 {!simpleMode && (
                 <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
-                  {['A', 'B', 'C', 'D', 'E'].map(speaker => (
+                  {activeSpeakers.map(speaker => (
                     <button 
                       key={speaker}
                       onMouseDown={(e) => e.preventDefault()} 
                       onClick={() => insertText(`\nSprecher ${speaker}: `)} 
-                      className={`w-10 h-10 rounded-full font-black flex items-center justify-center transition-all shadow-sm border-b-4 active:border-b-0 active:translate-y-1 hover:brightness-95 ${COLORS_FOR_SPEAKERS[speaker]}`}
+                      className={`w-10 h-10 rounded-full font-black flex items-center justify-center transition-all shadow-sm border-b-4 active:border-b-0 active:translate-y-1 hover:brightness-95 ${COLORS_FOR_SPEAKERS[speaker] || 'bg-slate-100 text-slate-700 border-slate-300'}`}
                       title={`Sprecher ${speaker}`}
                     >
                       {speaker}
                     </button>
                   ))}
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Sprecher wählen</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{speakerCount} Sprecher aktiv</span>
                 </div>
                 )}
 
@@ -750,7 +930,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
               <p className="text-xs text-slate-400 mb-3">Klicke auf ein Wort für die Erklärung:</p>
               <div className="flex flex-wrap gap-2">
                 {topic.wordBank.map((wordItem, idx) => {
-                   const isUsed = allScriptText.includes(wordItem.word.toLowerCase());
+                   const isUsed = hasGlossaryContext(allScriptText, wordItem.word);
                    return (
                    <button 
                      key={idx}
@@ -985,7 +1165,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                         
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                           {topic.wordBank.map((wordItem, idx) => {
-                             const isUsed = allScriptText.includes(wordItem.word.toLowerCase());
+                            const isUsed = hasGlossaryContext(allScriptText, wordItem.word);
                              return (
                              <button 
                                key={idx}
