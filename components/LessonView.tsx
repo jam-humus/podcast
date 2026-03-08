@@ -19,6 +19,7 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   const [quizSequence, setQuizSequence] = useState<number[]>(() => topic.lesson.quizzes.map((_, idx) => idx));
   const [currentQuizPos, setCurrentQuizPos] = useState(0);
   const [quizRetryAdded, setQuizRetryAdded] = useState<number[]>([]);
+
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
   // Case State
@@ -29,6 +30,7 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   const [checkSequence, setCheckSequence] = useState<number[]>(() => topic.lesson.checks.map((_, idx) => idx));
   const [currentCheckPos, setCurrentCheckPos] = useState(0);
   const [checkRetryAdded, setCheckRetryAdded] = useState<number[]>([]);
+
   const [checkAnswer, setCheckAnswer] = useState<string | null>(null);
 
   const [showExplanation, setShowExplanation] = useState(false);
@@ -71,6 +73,7 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   };
 
   const appendCheckReview = (idx: number) => {
+
     if (checkRetryAdded.includes(idx)) return;
     setCheckRetryAdded(prev => [...prev, idx]);
     setCheckSequence(prev => (prev.slice(currentCheckPos + 1).includes(idx) ? prev : [...prev, idx]));
@@ -194,6 +197,9 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
 
   const title = mode === 'basics' ? 'Basis-Wissen' : 'Profi-Check';
   const themeColor = mode === 'basics' ? 'text-indigo-600 bg-indigo-100' : 'text-purple-600 bg-purple-100';
+  const baseQuestionCount = topic.lesson.quizzes.length + topic.lesson.checks.length;
+  const retryQuestionCount = quizMistakes.length + checkMistakes.length;
+  const masteryPercent = Math.max(0, Math.round(((baseQuestionCount - retryQuestionCount) / Math.max(1, baseQuestionCount)) * 100));
   
   // Stable Score Display: Base Project Score + Session Earnings
   const displayedScore = project.score + sessionScore;
@@ -264,6 +270,12 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
                   <Award size={18}/> {isQuizReview ? 'Wiederholung' : 'Quiz'}
                 </span>
              </div>
+
+             {isQuizReview && (
+               <div className="mb-6 bg-indigo-50 border-2 border-indigo-100 rounded-2xl p-4 text-indigo-900 font-semibold text-sm">
+                 Wiederholungsrunde: Ihr trainiert jetzt Fragen, die vorher noch unsicher waren.
+               </div>
+             )}
 
              <div className="flex gap-4 items-start mb-8">
                 <h3 className="text-2xl font-black text-slate-800 leading-snug flex-1">
@@ -379,6 +391,12 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
                 </span>
              </div>
 
+             {isCheckReview && (
+               <div className="mb-6 bg-orange-50 border-2 border-orange-100 rounded-2xl p-4 text-orange-900 font-semibold text-sm text-left">
+                 Wiederholungsrunde: Sehr gut, ihr übt genau die schwierigen Entscheidungen nochmal.
+               </div>
+             )}
+
              <div className="flex justify-center items-center gap-3 mb-12">
                <h3 className="text-3xl font-black text-slate-800 leading-tight">
                   "{topic.lesson.checks[currentCheckIdx].statement}"
@@ -441,6 +459,16 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
                 <span className="text-6xl font-black text-yellow-500 flex items-center gap-2">
                    +{sessionScore + 50} <Sparkles size={40}/>
                 </span>
+             </div>
+
+             <div className="bg-emerald-50 border-4 border-emerald-100 p-5 rounded-3xl mb-8 text-left">
+               <h3 className="text-emerald-900 font-black text-lg mb-2">Lern-Check</h3>
+               <p className="text-emerald-800 font-semibold mb-3">Sicher beherrscht: {masteryPercent}%</p>
+               <ul className="space-y-1 text-emerald-900 text-sm font-semibold">
+                 <li>• Basisfragen gesamt: {baseQuestionCount}</li>
+                 <li>• Wiederholte Fragen: {retryQuestionCount}</li>
+                 <li>• Tipp: Sprecht kurz darüber, warum die Wiederholungsfragen schwierig waren.</li>
+               </ul>
              </div>
 
              <button 

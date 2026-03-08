@@ -442,6 +442,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   const [showStarterModal, setShowStarterModal] = useState(false);
   const [modalTab, setModalTab] = useState<'starters' | 'ideas' | 'glossary'>('starters');
   const [selectedStarterCategory, setSelectedStarterCategory] = useState<StarterOption | null>(null);
+  const [showAdvancedIdeas, setShowAdvancedIdeas] = useState(false);
   
   // Word Def Modal State
   const [selectedWordDef, setSelectedWordDef] = useState<WordDef | null>(null);
@@ -466,6 +467,10 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
       setIsSpeaking(false);
     }
   }, []);
+
+  useEffect(() => {
+    setShowAdvancedIdeas(false);
+  }, [activeCardIdx, modalTab]);
 
   // --- AUDIO HELPER ---
   const speakText = (text: string) => {
@@ -498,23 +503,70 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
 
   // --- Helper: Get Content Ideas for current card type ---
   const getContentIdeas = () => {
+    type IdeaPack = {
+      title: string;
+      items: string[];
+      quickTemplate?: string;
+      avoid?: string[];
+      coachTip?: string;
+    };
+
     switch (activeCard.type) {
       case 'explanation': 
-        return { title: `Erklärung: ${topic.simpleTitle}`, items: topic.miniExplain };
+        return {
+          title: `Erklärung: ${topic.simpleTitle}`,
+          items: topic.miniExplain,
+          quickTemplate: `${topic.simpleTitle} bedeutet: ... Das heißt für Kinder: ...`,
+          avoid: ['Keine schwierigen Wörter ohne Erklärung.', 'Keine langen Schachtelsätze.'],
+          coachTip: 'Erklärt so, dass auch ein Erstklässler es versteht.'
+        } as IdeaPack;
       case 'example': 
-        return { title: 'Ideen für Beispiele', items: topic.exampleIdeas };
+        return {
+          title: 'Ideen für Beispiele',
+          items: topic.exampleIdeas,
+          quickTemplate: 'Stellt euch vor: ... Dann passiert ... Das fühlt sich ... an.',
+          avoid: ['Nicht nur allgemein bleiben - nehmt eine konkrete Szene.', 'Gefühle der Person nicht vergessen.'],
+          coachTip: 'Ein starkes Beispiel hat Ort, Handlung und Gefühl.'
+        } as IdeaPack;
       case 'boundary': 
-        return { title: 'Wann ist die Grenze erreicht?', items: topic.boundaryIdeas };
+        return {
+          title: 'Wann ist die Grenze erreicht?',
+          items: topic.boundaryIdeas,
+          quickTemplate: 'Das ist okay, aber Stopp ist, wenn ...',
+          avoid: ['Keine unklaren Regeln wie „irgendwie“.', 'Nicht vergessen: Wen schützt die Grenze?'],
+          coachTip: 'Sagt die Grenze in einem klaren Stopp-Satz.'
+        } as IdeaPack;
       case 'tip': 
-        return { title: 'Tipps für die Klasse', items: topic.schoolTips };
+        return {
+          title: 'Tipps für die Klasse',
+          items: [...topic.schoolTips, ...topic.helpPlan],
+          quickTemplate: 'Wenn das passiert, dann ... Danach ... Und dann ...',
+          avoid: ['Keine Tipps wie „Ignorieren und nichts tun“.', 'Immer auch Hilfe durch Erwachsene nennen.'],
+          coachTip: 'Der beste Tipp ist konkret und sofort umsetzbar.'
+        } as IdeaPack;
       case 'hook': 
-        return { title: 'Ideen für den Einstieg', items: ['Starte mit einem lauten Geräusch!', 'Stelle eine Frage an die Zuhörer.', 'Erzähle ein kurzes Rätsel.', 'Mach ein kleines Rollenspiel.'] };
+        return {
+          title: 'Ideen für den Einstieg',
+          items: ['Starte mit einem lauten Geräusch!', 'Stelle eine Frage an die Zuhörer.', 'Erzähle ein kurzes Rätsel.', 'Mach ein kleines Rollenspiel.'],
+          quickTemplate: 'Habt ihr euch schon mal gefragt ...?',
+          coachTip: 'Der Einstieg soll sofort neugierig machen.'
+        } as IdeaPack;
       case 'intro': 
-        return { title: 'Ideen für die Begrüßung', items: [`Sagt eure Namen und: Wir sind das Team ${topic.simpleTitle}!`, 'Sagt, aus welcher Klasse ihr kommt.', 'Macht Musik am Anfang.', 'Erklärt kurz, was ein Grundrecht überhaupt ist.'] };
+        return {
+          title: 'Ideen für die Begrüßung',
+          items: [`Sagt eure Namen und: Wir sind das Team ${topic.simpleTitle}!`, 'Sagt, aus welcher Klasse ihr kommt.', 'Macht Musik am Anfang.', 'Erklärt kurz, was ein Grundrecht überhaupt ist.'],
+          quickTemplate: `Hallo, wir sind ... aus der ... Heute geht es um ${topic.simpleTitle}.`,
+          coachTip: 'Kurz vorstellen, Thema nennen, freundlich starten.'
+        } as IdeaPack;
       case 'outro': 
-        return { title: 'Ideen für den Schluss', items: ['Bedankt euch fürs Zuhören.', 'Spielt ein Lied zum Schluss.', 'Wünscht allen einen schönen Tag.', 'Wiederholt nochmal den wichtigsten Satz.'] };
+        return {
+          title: 'Ideen für den Schluss',
+          items: ['Bedankt euch fürs Zuhören.', 'Spielt ein Lied zum Schluss.', 'Wünscht allen einen schönen Tag.', 'Wiederholt nochmal den wichtigsten Satz.'],
+          quickTemplate: 'Danke fürs Zuhören! Merkt euch: ... Tschüss!',
+          coachTip: 'Am Ende immer einen klaren Merksatz wiederholen.'
+        } as IdeaPack;
       default: 
-        return { title: 'Allgemeine Ideen', items: [] };
+        return { title: 'Allgemeine Ideen', items: [], coachTip: 'Bleibt bei kurzen, klaren Sätzen.' } as IdeaPack;
     }
   };
 
@@ -673,11 +725,43 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
     setShowStarterModal(false);
     setSelectedStarterCategory(null);
     setModalTab('starters');
+    setShowAdvancedIdeas(false);
   };
 
   const contentIdeas = getContentIdeas();
   const activeCardChecks = analyzeCardQuality(activeCard);
   const missingChecks = activeCardChecks.filter(check => !check.passed);
+  const guidedSnippet = contentIdeas.quickTemplate
+    ? `${contentIdeas.quickTemplate}${contentIdeas.items[0] ? ` Beispiel: ${contentIdeas.items[0]}` : ''}`
+    : null;
+  const showMiniSnippet = ['explanation', 'example', 'tip'].includes(activeCard.type);
+  const compactIdeaItems = contentIdeas.items.slice(0, 3);
+
+  const explanationCard = cards.find(card => card.type === 'explanation');
+  const exampleCard = cards.find(card => card.type === 'example');
+  const boundaryCard = cards.find(card => card.type === 'boundary');
+  const tipCard = cards.find(card => card.type === 'tip');
+
+  const hasClearExplanation = explanationCard ? analyzeCardQuality(explanationCard).every(check => check.passed) : false;
+  const hasRealExample = exampleCard ? analyzeCardQuality(exampleCard).every(check => check.passed) : false;
+  const hasBoundaryRule = boundaryCard ? analyzeCardQuality(boundaryCard).every(check => check.passed) : false;
+  const hasActionTip = tipCard ? analyzeCardQuality(tipCard).every(check => check.passed) : false;
+  const hasKidFriendlyLanguage = cards.filter(card => card.text.trim().length > 0).every(card => {
+    const sentenceCount = card.text.split(/[.!?]/).filter(Boolean).length || 1;
+    const words = countWords(card.text);
+    return (words / sentenceCount) <= 18;
+  });
+
+  const readinessChecks = [
+    { label: SCRIPT_READINESS_GUIDE[0], passed: hasClearExplanation },
+    { label: SCRIPT_READINESS_GUIDE[1], passed: hasRealExample },
+    { label: SCRIPT_READINESS_GUIDE[2], passed: hasBoundaryRule },
+    { label: SCRIPT_READINESS_GUIDE[3], passed: hasActionTip },
+    { label: SCRIPT_READINESS_GUIDE[4], passed: hasKidFriendlyLanguage }
+  ];
+  const passedReadinessChecks = readinessChecks.filter(check => check.passed).length;
+  const firstMissingReadiness = readinessChecks.find(check => !check.passed);
+  const nextActionHint = missingChecks[0]?.hint || firstMissingReadiness?.label || 'Ihr seid bereit für den Feinschliff.';
 
   const explanationCard = cards.find(card => card.type === 'explanation');
   const exampleCard = cards.find(card => card.type === 'example');
@@ -848,6 +932,9 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                        {!check.passed && <div className="text-xs mt-1">Fehlt noch: {check.hint}</div>}
                      </div>
                    ))}
+                 </div>
+                 <div className="mt-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 text-xs text-blue-900 font-semibold">
+                   Nächster sinnvoller Schritt: {nextActionHint}
                  </div>
                  {missingChecks.length === 0 && (
                    <p className="text-xs text-green-700 font-bold mt-3">Stark! Diese Karte erfüllt alle Qualitätskriterien.</p>
@@ -1098,20 +1185,20 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
 
             {/* Modal Tabs */}
             <div className="flex bg-slate-100 p-2 gap-2 shrink-0 border-b-4 border-slate-200 overflow-x-auto">
-               <button 
-                 onClick={() => { setModalTab('starters'); setSelectedStarterCategory(null); }}
+                <button 
+                  onClick={() => { setModalTab('starters'); setSelectedStarterCategory(null); setShowAdvancedIdeas(false); }}
                  className={`flex-1 min-w-[150px] py-4 font-black rounded-2xl text-lg flex items-center justify-center gap-2 transition-all ${modalTab === 'starters' ? 'bg-white text-slate-800 shadow-sm border-b-4 border-blue-500' : 'text-slate-500 hover:bg-slate-200'}`}
                >
                  <PenTool size={20} /> Formulierungshilfen
                </button>
-               <button 
-                 onClick={() => { setModalTab('ideas'); setSelectedStarterCategory(null); }}
+                <button 
+                  onClick={() => { setModalTab('ideas'); setSelectedStarterCategory(null); setShowAdvancedIdeas(false); }}
                  className={`flex-1 min-w-[150px] py-4 font-black rounded-2xl text-lg flex items-center justify-center gap-2 transition-all ${modalTab === 'ideas' ? 'bg-white text-slate-800 shadow-sm border-b-4 border-amber-500' : 'text-slate-500 hover:bg-slate-200'}`}
                >
                  <Lightbulb size={20} /> Ideen für den Inhalt
                </button>
-               <button 
-                 onClick={() => { setModalTab('glossary'); setSelectedStarterCategory(null); }}
+                <button 
+                  onClick={() => { setModalTab('glossary'); setSelectedStarterCategory(null); setShowAdvancedIdeas(false); }}
                  className={`flex-1 min-w-[150px] py-4 font-black rounded-2xl text-lg flex items-center justify-center gap-2 transition-all ${modalTab === 'glossary' ? 'bg-white text-slate-800 shadow-sm border-b-4 border-green-500' : 'text-slate-500 hover:bg-slate-200'}`}
                >
                  <BookOpen size={20} /> Wörter-Glossar
@@ -1198,9 +1285,54 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                        <p className="text-amber-900/70 mb-6 font-medium text-lg">
                          Hier sind ein paar Vorschläge, was ihr in diesem Teil sagen könntet. Klickt auf eine Idee, um sie als Notiz in euer Skript zu übernehmen!
                        </p>
+
+                       {contentIdeas.quickTemplate && (
+                         <button
+                           onClick={() => { insertText(` ${contentIdeas.quickTemplate} `); closeModal(); }}
+                           className="w-full text-left p-5 mb-5 bg-white border-4 border-amber-200 hover:border-amber-400 hover:bg-amber-100 rounded-2xl transition-all"
+                         >
+                           <div className="text-xs uppercase tracking-widest font-black text-amber-600 mb-1">Schnell-Vorlage</div>
+                           <div className="text-amber-900 font-black text-lg">{contentIdeas.quickTemplate}</div>
+                         </button>
+                       )}
+
+                       {guidedSnippet && showMiniSnippet && (
+                         <button
+                           onClick={() => { insertText(` ${guidedSnippet} `); closeModal(); }}
+                           className="w-full text-left p-5 mb-5 bg-indigo-50 border-4 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-100 rounded-2xl transition-all"
+                         >
+                           <div className="text-xs uppercase tracking-widest font-black text-indigo-600 mb-1">Mini-Baustein</div>
+                           <div className="text-indigo-900 font-black text-base">{guidedSnippet}</div>
+                         </button>
+                       )}
+
+                       <button
+                         onClick={() => setShowAdvancedIdeas(prev => !prev)}
+                         className="mb-6 bg-slate-100 hover:bg-slate-200 text-slate-700 border-2 border-slate-200 px-4 py-2 rounded-xl font-bold text-sm"
+                       >
+                         {showAdvancedIdeas ? 'Weniger Hilfe anzeigen' : 'Mehr Hilfe anzeigen'}
+                       </button>
+
+                       {showAdvancedIdeas && contentIdeas.coachTip && (
+                         <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-4 mb-5">
+                           <div className="text-[11px] font-black uppercase tracking-widest text-emerald-700 mb-1">Coach-Tipp</div>
+                           <p className="text-emerald-900 font-semibold">{contentIdeas.coachTip}</p>
+                         </div>
+                       )}
+
+                       {showAdvancedIdeas && contentIdeas.avoid && contentIdeas.avoid.length > 0 && (
+                         <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-4 mb-6">
+                           <div className="text-[11px] font-black uppercase tracking-widest text-rose-700 mb-2">Lieber vermeiden</div>
+                           <ul className="space-y-1 text-rose-900 text-sm font-semibold">
+                             {contentIdeas.avoid.map((warning, idx) => (
+                               <li key={idx}>• {warning}</li>
+                             ))}
+                           </ul>
+                         </div>
+                       )}
                        
                        <div className="grid grid-cols-1 gap-4">
-                         {contentIdeas.items.length > 0 ? contentIdeas.items.map((item, idx) => (
+                         {compactIdeaItems.length > 0 ? compactIdeaItems.map((item, idx) => (
                            <button
                              key={idx}
                              onClick={() => { insertText(` ${item} `); closeModal(); }}
@@ -1215,6 +1347,12 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                            </div>
                          )}
                        </div>
+
+                       {contentIdeas.items.length > compactIdeaItems.length && (
+                         <p className="text-xs text-amber-800 mt-4 font-semibold">
+                           Es gibt noch mehr Ideen - wechselt die Karte oder klickt auf "Mehr Hilfe", um tiefer zu arbeiten.
+                         </p>
+                       )}
                     </div>
                  </div>
                )}
