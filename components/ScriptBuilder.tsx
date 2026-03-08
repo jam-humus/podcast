@@ -235,6 +235,13 @@ const BadgeToast = ({ badge, onClose }: { badge: Badge, onClose: () => void }) =
 
 export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack }: Props) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  interface QualityCheck {
+    id: string;
+    label: string;
+    passed: boolean;
+    hint: string;
+  }
   
   // State
   const [cards, setCards] = useState<ScriptCardData[]>(() => {
@@ -253,6 +260,125 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
       return clean ? clean.split(/\s+/).length : 0;
   };
 
+  const normalizeText = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/ä/g, 'ae')
+      .replace(/ö/g, 'oe')
+      .replace(/ü/g, 'ue')
+      .replace(/ß/g, 'ss');
+
+  const tokenize = (text: string) =>
+    normalizeText(text)
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean);
+
+  const buildWordVariants = (word: string) => {
+    const base = normalizeText(word);
+    const stem = base.length > 4 ? base.slice(0, -1) : base;
+    const variants = new Set([
+      base,
+      stem,
+      `${base}e`,
+      `${base}en`,
+      `${base}er`,
+      `${base}n`,
+      `${base}s`
+    ]);
+    return [...variants].filter(v => v.length > 2);
+  };
+
+  const hasGlossaryWord = (text: string, glossaryWord: string) => {
+    const tokens = tokenize(text);
+    const variants = buildWordVariants(glossaryWord);
+    return tokens.some(token => variants.some(variant => token === variant || token.startsWith(variant)));
+  };
+
+  const hasGlossaryContext = (text: string, glossaryWord: string) => {
+    const contextWords = ['bedeutet', 'heisst', 'ist', 'gilt', 'schuetzt', 'regel', 'recht', 'wichtig'];
+    return text
+      .split(/[.!?]/)
+      .map(sentence => normalizeText(sentence))
+      .some(sentence => hasGlossaryWord(sentence, glossaryWord) && contextWords.some(ctx => sentence.includes(ctx)));
+  };
+
+  const analyzeCardQuality = (card: ScriptCardData): QualityCheck[] => {
+    const normalized = normalizeText(card.text);
+    const checks: QualityCheck[] = [];
+
+    if (card.type === 'boundary') {
+      checks.push({
+        id: 'boundary-signal',
+        label: 'Klare Grenze genannt',
+        passed: /\b(aber|nicht|stopp|grenze|endet)\b/.test(normalized),
+        hint: 'Formuliere eine klare Grenze, z. B. „Stopp heißt Stopp“.'
+      });
+      checks.push({
+        id: 'boundary-reason',
+        label: 'Begründung erklärt',
+        passed: /\b(weil|damit|sonst|wehtut|verletzt)\b/.test(normalized),
+        hint: 'Erklärt kurz, warum die Grenze wichtig ist.'
+      });
+    }
+
+    if (card.type === 'example') {
+      checks.push({
+        id: 'example-scene',
+        label: 'Konkrete Situation beschrieben',
+        passed: /\b(zum beispiel|stellt euch vor|gestern|heute|in der schule|im alltag)\b/.test(normalized),
+        hint: 'Beschreibt eine klare Alltagsszene (Ort + was passiert).'
+      });
+      checks.push({
+        id: 'example-emotion',
+        label: 'Gefühle eingebaut',
+        passed: /\b(traurig|wuetend|angst|freut|erschrocken|unsicher|gluecklich)\b/.test(normalized),
+        hint: 'Ergänzt Gefühle der Beteiligten (z. B. traurig, wütend, erleichtert).'
+      });
+    }
+
+    if (card.type === 'outro') {
+      checks.push({
+        id: 'outro-summary',
+        label: 'Zusammenfassung enthalten',
+        passed: /\b(merkt euch|wichtigste|zusammengefasst|fazit)\b/.test(normalized),
+        hint: 'Fasst die Kernbotschaft in einem Satz zusammen.'
+      });
+      checks.push({
+        id: 'outro-farewell',
+        label: 'Verabschiedung enthalten',
+        passed: /\b(tschuess|danke|bis bald|zuhoeren)\b/.test(normalized),
+        hint: 'Fügt eine klare Verabschiedung ein (z. B. Danke fürs Zuhören).'
+      });
+    }
+
+    if (card.type === 'explanation') {
+      checks.push({
+        id: 'explanation-merksatz',
+        label: 'Merksatz/Schlüsselidee eingebunden',
+        passed: tokenize(topic.keySentence).some(word => word.length > 4 && normalized.includes(word)),
+        hint: 'Nutzt Wörter aus dem Merksatz, damit die Erklärung eindeutig ist.'
+      });
+      checks.push({
+        id: 'explanation-glossary',
+        label: 'Glossarbegriff im Kontext erklärt',
+        passed: topic.wordBank.some(word => hasGlossaryContext(card.text, word.word)),
+        hint: 'Erklärt mindestens einen Glossarbegriff in einem vollständigen Satz.'
+      });
+    }
+
+    return checks;
+  };
+
+  const getQualityScore = (currentCards: ScriptCardData[]) => {
+    const allChecks = currentCards.flatMap(card => analyzeCardQuality(card));
+    return allChecks.filter(check => check.passed).length * 20;
+  };
+
+  const getUsedGlossaryCount = (currentCards: ScriptCardData[]) => {
+    const fullText = currentCards.map(c => c.text).join(' ');
+    return topic.wordBank.filter(word => hasGlossaryContext(fullText, word.word)).length;
+  };
+
   // Helper: Calculate Script Score based on cards AND glossary usage
   const calculateScriptScore = (currentCards: ScriptCardData[]) => {
     let scriptScore = 0;
@@ -268,13 +394,13 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
     }).length;
     scriptScore += completedCards * 50;
 
-    // 3. NEW: Points for Glossary Words (30 points per unique word used)
-    const fullText = currentCards.map(c => c.text).join(' ').toLowerCase();
-    const usedGlossaryCount = topic.wordBank.filter(wb => 
-      fullText.includes(wb.word.toLowerCase())
-    ).length;
+    // 3. Points for Glossary Words with context (30 points per unique word)
+    const usedGlossaryCount = getUsedGlossaryCount(currentCards);
     
     scriptScore += usedGlossaryCount * 30;
+
+    // 4. Points for quality checks
+    scriptScore += getQualityScore(currentCards);
 
     return scriptScore;
   };
@@ -513,7 +639,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   
   const canMagicExtend = getAutoSuggestion() !== null; 
 
-  const allScriptText = cards.map(c => c.text).join(' ').toLowerCase();
+  const allScriptText = cards.map(c => c.text).join(' ');
 
   // Close modal logic
   const closeModal = () => {
@@ -523,6 +649,8 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   };
 
   const contentIdeas = getContentIdeas();
+  const activeCardChecks = analyzeCardQuality(activeCard);
+  const missingChecks = activeCardChecks.filter(check => !check.passed);
 
   return (
     <div className="h-screen flex flex-col bg-slate-100 font-sans selection:bg-yellow-200">
@@ -640,6 +768,26 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
              <SpeakerRoleHelp type={activeCard.type} />
              )}
 
+             {!simpleMode && activeCardChecks.length > 0 && (
+               <div className="bg-white border-2 border-amber-100 rounded-2xl p-4 mb-4 shadow-sm">
+                 <h4 className="text-xs font-black text-amber-500 uppercase tracking-widest mb-3">Qualitäts-Check</h4>
+                 <div className="space-y-2">
+                   {activeCardChecks.map(check => (
+                     <div
+                       key={check.id}
+                       className={`rounded-xl border px-3 py-2 text-sm ${check.passed ? 'bg-green-50 border-green-200 text-green-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}
+                     >
+                       <div className="font-bold flex items-center gap-2">{check.passed ? '✅' : '⚠️'} {check.label}</div>
+                       {!check.passed && <div className="text-xs mt-1">Fehlt noch: {check.hint}</div>}
+                     </div>
+                   ))}
+                 </div>
+                 {missingChecks.length === 0 && (
+                   <p className="text-xs text-green-700 font-bold mt-3">Stark! Diese Karte erfüllt alle Qualitätskriterien.</p>
+                 )}
+               </div>
+             )}
+
              {/* Toolbar */}
              <div className="bg-white rounded-t-3xl border-2 border-slate-200 border-b-0 p-4 flex items-center justify-between gap-4 shadow-sm z-10 mt-2">
                 {/* Speakers - GAMIFIED TOKENS */}
@@ -750,7 +898,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
               <p className="text-xs text-slate-400 mb-3">Klicke auf ein Wort für die Erklärung:</p>
               <div className="flex flex-wrap gap-2">
                 {topic.wordBank.map((wordItem, idx) => {
-                   const isUsed = allScriptText.includes(wordItem.word.toLowerCase());
+                   const isUsed = hasGlossaryContext(allScriptText, wordItem.word);
                    return (
                    <button 
                      key={idx}
@@ -985,7 +1133,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                         
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                           {topic.wordBank.map((wordItem, idx) => {
-                             const isUsed = allScriptText.includes(wordItem.word.toLowerCase());
+                            const isUsed = hasGlossaryContext(allScriptText, wordItem.word);
                              return (
                              <button 
                                key={idx}
