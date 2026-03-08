@@ -763,6 +763,30 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   const firstMissingReadiness = readinessChecks.find(check => !check.passed);
   const nextActionHint = missingChecks[0]?.hint || firstMissingReadiness?.label || 'Ihr seid bereit für den Feinschliff.';
 
+  const explanationCard = cards.find(card => card.type === 'explanation');
+  const exampleCard = cards.find(card => card.type === 'example');
+  const boundaryCard = cards.find(card => card.type === 'boundary');
+  const tipCard = cards.find(card => card.type === 'tip');
+
+  const hasClearExplanation = explanationCard ? analyzeCardQuality(explanationCard).every(check => check.passed) : false;
+  const hasRealExample = exampleCard ? analyzeCardQuality(exampleCard).every(check => check.passed) : false;
+  const hasBoundaryRule = boundaryCard ? analyzeCardQuality(boundaryCard).every(check => check.passed) : false;
+  const hasActionTip = tipCard ? analyzeCardQuality(tipCard).every(check => check.passed) : false;
+  const hasKidFriendlyLanguage = cards.filter(card => card.text.trim().length > 0).every(card => {
+    const sentenceCount = card.text.split(/[.!?]/).filter(Boolean).length || 1;
+    const words = countWords(card.text);
+    return (words / sentenceCount) <= 18;
+  });
+
+  const readinessChecks = [
+    { label: SCRIPT_READINESS_GUIDE[0], passed: hasClearExplanation },
+    { label: SCRIPT_READINESS_GUIDE[1], passed: hasRealExample },
+    { label: SCRIPT_READINESS_GUIDE[2], passed: hasBoundaryRule },
+    { label: SCRIPT_READINESS_GUIDE[3], passed: hasActionTip },
+    { label: SCRIPT_READINESS_GUIDE[4], passed: hasKidFriendlyLanguage }
+  ];
+  const passedReadinessChecks = readinessChecks.filter(check => check.passed).length;
+
   return (
     <div className="min-h-screen md:h-screen flex flex-col bg-slate-100 font-sans selection:bg-yellow-200">
       

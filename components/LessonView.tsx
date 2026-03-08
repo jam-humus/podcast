@@ -19,7 +19,7 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   const [quizSequence, setQuizSequence] = useState<number[]>(() => topic.lesson.quizzes.map((_, idx) => idx));
   const [currentQuizPos, setCurrentQuizPos] = useState(0);
   const [quizRetryAdded, setQuizRetryAdded] = useState<number[]>([]);
-  const [quizMistakes, setQuizMistakes] = useState<number[]>([]);
+
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
   // Case State
@@ -30,7 +30,7 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   const [checkSequence, setCheckSequence] = useState<number[]>(() => topic.lesson.checks.map((_, idx) => idx));
   const [currentCheckPos, setCurrentCheckPos] = useState(0);
   const [checkRetryAdded, setCheckRetryAdded] = useState<number[]>([]);
-  const [checkMistakes, setCheckMistakes] = useState<number[]>([]);
+
   const [checkAnswer, setCheckAnswer] = useState<string | null>(null);
 
   const [showExplanation, setShowExplanation] = useState(false);
@@ -67,14 +67,13 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   const isCheckReview = currentCheckPos >= topic.lesson.checks.length;
 
   const appendQuizReview = (idx: number) => {
-    setQuizMistakes(prev => (prev.includes(idx) ? prev : [...prev, idx]));
     if (quizRetryAdded.includes(idx)) return;
     setQuizRetryAdded(prev => [...prev, idx]);
     setQuizSequence(prev => (prev.slice(currentQuizPos + 1).includes(idx) ? prev : [...prev, idx]));
   };
 
   const appendCheckReview = (idx: number) => {
-    setCheckMistakes(prev => (prev.includes(idx) ? prev : [...prev, idx]));
+
     if (checkRetryAdded.includes(idx)) return;
     setCheckRetryAdded(prev => [...prev, idx]);
     setCheckSequence(prev => (prev.slice(currentCheckPos + 1).includes(idx) ? prev : [...prev, idx]));
