@@ -4,7 +4,7 @@ import { TOPICS, SCRIPT_TEMPLATE, BADGES, GENERAL_INTRO, LEVELS } from './consta
 import { ScriptBuilder } from './components/ScriptBuilder';
 import { LessonView } from './components/LessonView';
 import { PDFPreview } from './services/pdfService';
-import { Mic, Users, ArrowRight, RotateCcw, BookOpen, PenTool, CheckCircle2, BrainCircuit, Scale, Star, LayoutGrid, ArrowLeft, Lock } from 'lucide-react';
+import { Mic, Users, ArrowRight, RotateCcw, BookOpen, PenTool, CheckCircle2, BrainCircuit, Scale, Star, LayoutGrid, ArrowLeft, Lock, Sparkles } from 'lucide-react';
 
 type ViewState = 'topic-select' | 'team-input' | 'dashboard' | 'intro-mission' | 'lesson-a' | 'lesson-b' | 'workshop' | 'print';
 
@@ -222,17 +222,29 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-yellow-200">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-yellow-200 relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
+        <div className="absolute top-1/3 -right-24 h-80 w-80 rounded-full bg-violet-200/40 blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 h-64 w-64 rounded-full bg-emerald-200/30 blur-3xl" />
+        <svg className="absolute top-14 right-10 text-blue-200/60" width="160" height="70" viewBox="0 0 160 70" fill="none" aria-hidden="true">
+          <path d="M5 35C30 8 52 8 76 35C101 62 124 62 155 35" stroke="currentColor" strokeWidth="6" strokeLinecap="round"/>
+          <path d="M5 50C30 23 52 23 76 50C101 77 124 77 155 50" stroke="currentColor" strokeOpacity="0.5" strokeWidth="4" strokeLinecap="round"/>
+        </svg>
+      </div>
       
       {/* 1. Landing / Topic Select */}
       {view === 'topic-select' && (
-        <div className="max-w-6xl mx-auto p-6 flex flex-col items-center min-h-screen justify-center">
+        <div className="max-w-6xl mx-auto p-6 flex flex-col items-center min-h-screen justify-center relative z-10">
           <div className="mb-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-             <div className="bg-rose-100 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl rotate-3 border-4 border-rose-200">
+             <div className="bg-gradient-to-br from-rose-100 via-white to-blue-100 w-28 h-28 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl rotate-3 border-4 border-white">
                <Mic size={48} className="text-rose-500" />
              </div>
-             <h1 className="text-6xl font-black text-slate-900 mb-4 tracking-tight drop-shadow-sm">Podcast Werkstatt</h1>
-             <p className="text-2xl text-slate-500 max-w-2xl mx-auto font-medium">
+             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-blue-100 text-blue-600 text-xs font-black tracking-wider uppercase mb-4 backdrop-blur-sm">
+              <Sparkles size={14} /> Für Grundschüler gemacht
+             </div>
+             <h1 className="text-5xl md:text-6xl font-black text-slate-900 mb-4 tracking-tight drop-shadow-sm">Podcast Werkstatt</h1>
+             <p className="text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto font-medium leading-relaxed">
                Erstellt euer eigenes Skript für eine Radiosendung über die Grundrechte. 
              </p>
              {project && (
@@ -250,14 +262,14 @@ export default function App() {
               <button 
                 key={topic.id}
                 onClick={() => handleSelectTopic(topic.id)}
-                className="bg-white p-8 rounded-3xl border-b-8 border-slate-200 hover:border-blue-400 hover:border-b-8 hover:-translate-y-1 active:border-b-0 active:translate-y-1 transition-all group text-left relative overflow-hidden shadow-lg hover:shadow-2xl"
+                className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl border-b-8 border-slate-200 hover:border-blue-400 hover:border-b-8 hover:-translate-y-1 active:border-b-0 active:translate-y-1 transition-all group text-left relative overflow-hidden shadow-lg hover:shadow-2xl"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                    <span className="text-9xl">{topic.icon}</span>
                 </div>
                 <div className="relative z-10">
-                  <div className="text-6xl mb-4 transform group-hover:scale-110 transition-transform origin-left">{topic.icon}</div>
+                  <div className="text-6xl mb-4 transform group-hover:scale-110 transition-transform origin-left inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-gradient-to-br from-blue-50 to-violet-50 border border-blue-100">{topic.icon}</div>
                   <h3 className="text-3xl font-black text-slate-800 mb-2">{topic.simpleTitle}</h3>
                   <div className="inline-block bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 border border-slate-200">{topic.title}</div>
                   <p className="text-slate-500 font-medium leading-relaxed">{topic.description}</p>
@@ -270,13 +282,13 @@ export default function App() {
 
       {/* 2. Team Name Input */}
       {view === 'team-input' && selectedTopicId && (
-        <div className="max-w-md mx-auto p-6 flex flex-col items-center min-h-screen justify-center animate-in slide-in-from-right-8">
+        <div className="max-w-md mx-auto p-6 flex flex-col items-center min-h-screen justify-center animate-in slide-in-from-right-8 relative z-10">
            <button onClick={() => setView('topic-select')} className="mb-8 text-slate-400 hover:text-slate-600 font-bold flex items-center gap-2">
              <ArrowLeft size={16}/> Zurück zur Themen-Wahl
            </button>
-           <div className="bg-white p-10 rounded-[2rem] shadow-2xl w-full border-4 border-slate-100">
+           <div className="bg-white/95 backdrop-blur p-10 rounded-[2rem] shadow-2xl w-full border-4 border-slate-100">
               <div className="text-center mb-8">
-                <span className="text-7xl block mb-4 animate-bounce">{TOPICS[selectedTopicId].icon}</span>
+                <span className="text-7xl block mb-4">{TOPICS[selectedTopicId].icon}</span>
                 <h2 className="text-3xl font-black text-slate-800 leading-tight">{TOPICS[selectedTopicId].simpleTitle}</h2>
               </div>
               <label className="block font-bold text-slate-500 mb-2 uppercase tracking-wide text-xs">Wie heißt euer Team?</label>
@@ -305,7 +317,7 @@ export default function App() {
 
       {/* 3. Team Dashboard (THE MISSION PATH) */}
       {view === 'dashboard' && project && (
-        <div className="max-w-4xl mx-auto p-4 md:p-8 flex flex-col min-h-screen">
+        <div className="max-w-4xl mx-auto p-4 md:p-8 flex flex-col min-h-screen relative z-10">
           
           {/* Top Bar */}
           <div className="flex justify-between items-center mb-8">
@@ -322,9 +334,10 @@ export default function App() {
           </div>
 
           {/* Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-12 bg-white/80 backdrop-blur-sm border border-blue-100 rounded-3xl py-8 px-6 shadow-sm">
              <h1 className="text-5xl font-black text-slate-900 mb-2">Hallo, {project.teamName}!</h1>
              <p className="text-2xl text-slate-500 font-medium">Eure Mission: <span className="text-blue-600">{TOPICS[project.topicId].simpleTitle}</span></p>
+             <p className="text-sm font-bold uppercase tracking-widest text-blue-500 mt-3 inline-flex items-center gap-2"><Sparkles size={14} /> Bereit für den nächsten Lernschritt?</p>
           </div>
              
           {/* THE PATH (Timeline) */}
@@ -445,7 +458,7 @@ export default function App() {
           </div>
           
           {/* Trophies Footer */}
-          <div className="mt-16 bg-slate-100 p-6 rounded-3xl border-4 border-slate-200">
+          <div className="mt-16 bg-white/85 backdrop-blur p-6 rounded-3xl border-4 border-slate-200 shadow-lg">
              <h3 className="text-slate-400 font-bold uppercase tracking-widest text-sm mb-4">Eure Trophäensammlung</h3>
              <div className="flex flex-wrap gap-4">
                 {BADGES.map(badge => {
@@ -473,7 +486,7 @@ export default function App() {
       )}
 
       {showResetPrompt && project && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white rounded-3xl border-4 border-red-100 p-6 shadow-2xl">
             <h3 className="text-2xl font-black text-slate-800 mb-2">Wirklich neu starten?</h3>
             <p className="text-slate-600 font-medium mb-6">
