@@ -71,6 +71,7 @@ export interface PodcastTopic {
   exampleIdeas: string[];
   boundaryIdeas: string[];
   schoolTips: string[];
+  helpPlan: string[];
   sentenceStarters: Record<CardType, StarterOption[]>;
   wordBank: WordDef[]; // Updated type
 }
