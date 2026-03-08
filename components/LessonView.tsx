@@ -16,7 +16,9 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   const [step, setStep] = useState<'intro' | 'quiz' | 'cases' | 'checks' | 'finished'>(mode === 'basics' ? 'intro' : 'cases');
   
   // Quiz State
-  const [currentQuizIdx, setCurrentQuizIdx] = useState(0);
+  const [quizSequence, setQuizSequence] = useState<number[]>(() => topic.lesson.quizzes.map((_, idx) => idx));
+  const [currentQuizPos, setCurrentQuizPos] = useState(0);
+  const [quizRetryAdded, setQuizRetryAdded] = useState<number[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   
   // Case State
@@ -24,7 +26,9 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   const [selectedCaseOption, setSelectedCaseOption] = useState<number | null>(null);
 
   // Check State
-  const [currentCheckIdx, setCurrentCheckIdx] = useState(0);
+  const [checkSequence, setCheckSequence] = useState<number[]>(() => topic.lesson.checks.map((_, idx) => idx));
+  const [currentCheckPos, setCurrentCheckPos] = useState(0);
+  const [checkRetryAdded, setCheckRetryAdded] = useState<number[]>([]);
   const [checkAnswer, setCheckAnswer] = useState<string | null>(null);
 
   const [showExplanation, setShowExplanation] = useState(false);
@@ -53,7 +57,24 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   useEffect(() => {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
-  }, [step, currentQuizIdx, currentCaseIdx, currentCheckIdx]);
+  }, [step, currentQuizPos, currentCaseIdx, currentCheckPos]);
+
+  const currentQuizIdx = quizSequence[currentQuizPos] ?? 0;
+  const currentCheckIdx = checkSequence[currentCheckPos] ?? 0;
+  const isQuizReview = currentQuizPos >= topic.lesson.quizzes.length;
+  const isCheckReview = currentCheckPos >= topic.lesson.checks.length;
+
+  const appendQuizReview = (idx: number) => {
+    if (quizRetryAdded.includes(idx)) return;
+    setQuizRetryAdded(prev => [...prev, idx]);
+    setQuizSequence(prev => (prev.slice(currentQuizPos + 1).includes(idx) ? prev : [...prev, idx]));
+  };
+
+  const appendCheckReview = (idx: number) => {
+    if (checkRetryAdded.includes(idx)) return;
+    setCheckRetryAdded(prev => [...prev, idx]);
+    setCheckSequence(prev => (prev.slice(currentCheckPos + 1).includes(idx) ? prev : [...prev, idx]));
+  };
 
   // --- AUDIO HELPER ---
   const speakText = (text: string) => {
@@ -92,14 +113,16 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
     if (idx === topic.lesson.quizzes[currentQuizIdx].correctIndex) {
       setSessionScore(prev => prev + 10);
       confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+    } else {
+      appendQuizReview(currentQuizIdx);
     }
   };
 
   const nextQuiz = () => {
     setSelectedOption(null);
     setShowExplanation(false);
-    if (currentQuizIdx < topic.lesson.quizzes.length - 1) {
-      setCurrentQuizIdx(prev => prev + 1);
+    if (currentQuizPos < quizSequence.length - 1) {
+      setCurrentQuizPos(prev => prev + 1);
     } else {
       setStep('finished');
     }
@@ -134,14 +157,16 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
     if (ans === correct) {
       setSessionScore(prev => prev + 10);
       confetti({ particleCount: 20, spread: 40, origin: { y: 0.8 }, colors: ['#fbbf24'] });
+    } else {
+      appendCheckReview(currentCheckIdx);
     }
   };
 
   const nextCheck = () => {
     setCheckAnswer(null);
     setShowExplanation(false);
-    if (currentCheckIdx < topic.lesson.checks.length - 1) {
-      setCurrentCheckIdx(prev => prev + 1);
+    if (currentCheckPos < checkSequence.length - 1) {
+      setCurrentCheckPos(prev => prev + 1);
     } else {
       setStep('finished');
     }
@@ -209,6 +234,17 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
                  {topic.lesson.introStory}
                </p>
              </div>
+
+             <div className="bg-emerald-50 border-4 border-emerald-100 rounded-3xl p-5 mb-8">
+               <h3 className="text-emerald-800 font-black text-lg mb-3">🛟 Hilfeplan bei Regelverletzung</h3>
+               <ol className="space-y-2 text-emerald-900 font-semibold">
+                 {topic.helpPlan.map((stepItem, idx) => (
+                   <li key={idx} className="bg-white/80 rounded-xl px-3 py-2 border border-emerald-100">
+                     <span className="font-black mr-2">{idx + 1}.</span>{stepItem}
+                   </li>
+                 ))}
+               </ol>
+             </div>
              <button 
                onClick={() => setStep('quiz')}
                className="w-full bg-indigo-600 text-white font-black text-2xl py-5 rounded-2xl border-b-8 border-indigo-800 hover:bg-indigo-500 active:border-b-0 active:translate-y-2 shadow-xl flex items-center justify-center gap-3 group transition-all"
@@ -222,10 +258,10 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
           <div className="bg-white rounded-[2rem] shadow-xl p-8 border-4 border-slate-100 animate-in slide-in-from-right-8">
              <div className="flex justify-between items-center mb-6">
                 <span className="text-sm font-bold bg-slate-100 text-slate-500 px-4 py-2 rounded-full uppercase tracking-wider">
-                  Frage {currentQuizIdx + 1}/{topic.lesson.quizzes.length}
+                  Frage {currentQuizPos + 1}/{quizSequence.length}
                 </span>
                 <span className="text-indigo-600 font-bold flex items-center gap-1 bg-indigo-50 px-3 py-1 rounded-lg">
-                  <Award size={18}/> Quiz
+                  <Award size={18}/> {isQuizReview ? 'Wiederholung' : 'Quiz'}
                 </span>
              </div>
 
@@ -336,10 +372,10 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
            <div className="bg-white rounded-[2rem] shadow-xl p-8 border-4 border-slate-100 animate-in slide-in-from-right-8 text-center">
               <div className="flex justify-between items-center mb-8">
                 <span className="text-sm font-bold bg-slate-100 text-slate-500 px-4 py-2 rounded-full uppercase tracking-wider">
-                  Check {currentCheckIdx + 1}/{topic.lesson.checks.length}
+                  Check {currentCheckPos + 1}/{checkSequence.length}
                 </span>
                 <span className="text-orange-500 font-bold flex items-center gap-1 bg-orange-50 px-3 py-1 rounded-lg">
-                  <HelpCircle size={18}/> Darf ich das?
+                  <HelpCircle size={18}/> {isCheckReview ? 'Wiederholung' : 'Darf ich das?'}
                 </span>
              </div>
 
