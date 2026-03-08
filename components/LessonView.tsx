@@ -204,10 +204,6 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   // Stable Score Display: Base Project Score + Session Earnings
   const displayedScore = project.score + sessionScore;
   const discussionPrompts = [
-    `Was bedeutet für euch: „${topic.keySentence}“?`,
-    `Wo erlebt ihr dieses Recht im Schulalltag? (${topic.exampleIdeas[0] ?? 'Nennt ein eigenes Beispiel.'})`,
-    `Welche Grenze ist wichtig, damit alle fair behandelt werden? (${topic.boundaryIdeas[0] ?? 'Welche Regel passt dazu?'})`,
-    `Was könnt ihr als Gruppe tun, wenn dieses Recht verletzt wird? (${topic.helpPlan[0] ?? 'Plant 2 konkrete Schritte.'})`,
   ];
 
   return (
@@ -248,14 +244,6 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
              </div>
 
              <div className="bg-amber-50 border-4 border-amber-100 rounded-3xl p-5 mb-8">
-               <h3 className="text-amber-800 font-black text-lg mb-3">💬 Gruppenstart: Erst diskutieren, dann quizzen</h3>
-               <p className="text-amber-900 font-semibold mb-3">
-                 Nehmt euch 5–7 Minuten. Jede Gruppe sammelt zu jeder Frage mindestens eine Idee und bestimmt eine Person fürs kurze Vorstellen.
-               </p>
-               <ul className="space-y-2 text-amber-900 font-semibold">
-                 {discussionPrompts.map((prompt, idx) => (
-                   <li key={idx} className="bg-white/90 rounded-xl px-3 py-2 border border-amber-100">
-                     <span className="font-black mr-2">{idx + 1}.</span>{prompt}
                    </li>
                  ))}
                </ul>
