@@ -198,11 +198,17 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   const title = mode === 'basics' ? 'Basis-Wissen' : 'Profi-Check';
   const themeColor = mode === 'basics' ? 'text-indigo-600 bg-indigo-100' : 'text-purple-600 bg-purple-100';
   const baseQuestionCount = topic.lesson.quizzes.length + topic.lesson.checks.length;
-  const retryQuestionCount = quizMistakes.length + checkMistakes.length;
+  const retryQuestionCount = quizRetryAdded.length + checkRetryAdded.length;
   const masteryPercent = Math.max(0, Math.round(((baseQuestionCount - retryQuestionCount) / Math.max(1, baseQuestionCount)) * 100));
   
   // Stable Score Display: Base Project Score + Session Earnings
   const displayedScore = project.score + sessionScore;
+  const discussionPrompts = [
+    `Was bedeutet für euch: „${topic.keySentence}“?`,
+    `Wo erlebt ihr dieses Recht im Schulalltag? (${topic.exampleIdeas[0] ?? 'Nennt ein eigenes Beispiel.'})`,
+    `Welche Grenze ist wichtig, damit alle fair behandelt werden? (${topic.boundaryIdeas[0] ?? 'Welche Regel passt dazu?'})`,
+    `Was könnt ihr als Gruppe tun, wenn dieses Recht verletzt wird? (${topic.helpPlan[0] ?? 'Plant 2 konkrete Schritte.'})`,
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-yellow-200">
@@ -239,6 +245,20 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
                <p className="text-xl leading-relaxed text-blue-900 font-medium">
                  {topic.lesson.introStory}
                </p>
+             </div>
+
+             <div className="bg-amber-50 border-4 border-amber-100 rounded-3xl p-5 mb-8">
+               <h3 className="text-amber-800 font-black text-lg mb-3">💬 Gruppenstart: Erst diskutieren, dann quizzen</h3>
+               <p className="text-amber-900 font-semibold mb-3">
+                 Nehmt euch 5–7 Minuten. Jede Gruppe sammelt zu jeder Frage mindestens eine Idee und bestimmt eine Person fürs kurze Vorstellen.
+               </p>
+               <ul className="space-y-2 text-amber-900 font-semibold">
+                 {discussionPrompts.map((prompt, idx) => (
+                   <li key={idx} className="bg-white/90 rounded-xl px-3 py-2 border border-amber-100">
+                     <span className="font-black mr-2">{idx + 1}.</span>{prompt}
+                   </li>
+                 ))}
+               </ul>
              </div>
 
              <div className="bg-emerald-50 border-4 border-emerald-100 rounded-3xl p-5 mb-8">
