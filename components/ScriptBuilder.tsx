@@ -442,6 +442,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   const [showStarterModal, setShowStarterModal] = useState(false);
   const [modalTab, setModalTab] = useState<'starters' | 'ideas' | 'glossary'>('starters');
   const [selectedStarterCategory, setSelectedStarterCategory] = useState<StarterOption | null>(null);
+  const [showAdvancedIdeas, setShowAdvancedIdeas] = useState(false);
   
   // Word Def Modal State
   const [selectedWordDef, setSelectedWordDef] = useState<WordDef | null>(null);
@@ -466,6 +467,10 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
       setIsSpeaking(false);
     }
   }, []);
+
+  useEffect(() => {
+    setShowAdvancedIdeas(false);
+  }, [activeCardIdx, modalTab]);
 
   // --- AUDIO HELPER ---
   const speakText = (text: string) => {
@@ -720,6 +725,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
     setShowStarterModal(false);
     setSelectedStarterCategory(null);
     setModalTab('starters');
+    setShowAdvancedIdeas(false);
   };
 
   const contentIdeas = getContentIdeas();
@@ -728,6 +734,8 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   const guidedSnippet = contentIdeas.quickTemplate
     ? `${contentIdeas.quickTemplate}${contentIdeas.items[0] ? ` Beispiel: ${contentIdeas.items[0]}` : ''}`
     : null;
+  const showMiniSnippet = ['explanation', 'example', 'tip'].includes(activeCard.type);
+  const compactIdeaItems = contentIdeas.items.slice(0, 3);
 
   const explanationCard = cards.find(card => card.type === 'explanation');
   const exampleCard = cards.find(card => card.type === 'example');
@@ -1153,20 +1161,20 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
 
             {/* Modal Tabs */}
             <div className="flex bg-slate-100 p-2 gap-2 shrink-0 border-b-4 border-slate-200 overflow-x-auto">
-               <button 
-                 onClick={() => { setModalTab('starters'); setSelectedStarterCategory(null); }}
+                <button 
+                  onClick={() => { setModalTab('starters'); setSelectedStarterCategory(null); setShowAdvancedIdeas(false); }}
                  className={`flex-1 min-w-[150px] py-4 font-black rounded-2xl text-lg flex items-center justify-center gap-2 transition-all ${modalTab === 'starters' ? 'bg-white text-slate-800 shadow-sm border-b-4 border-blue-500' : 'text-slate-500 hover:bg-slate-200'}`}
                >
                  <PenTool size={20} /> Formulierungshilfen
                </button>
-               <button 
-                 onClick={() => { setModalTab('ideas'); setSelectedStarterCategory(null); }}
+                <button 
+                  onClick={() => { setModalTab('ideas'); setSelectedStarterCategory(null); setShowAdvancedIdeas(false); }}
                  className={`flex-1 min-w-[150px] py-4 font-black rounded-2xl text-lg flex items-center justify-center gap-2 transition-all ${modalTab === 'ideas' ? 'bg-white text-slate-800 shadow-sm border-b-4 border-amber-500' : 'text-slate-500 hover:bg-slate-200'}`}
                >
                  <Lightbulb size={20} /> Ideen für den Inhalt
                </button>
-               <button 
-                 onClick={() => { setModalTab('glossary'); setSelectedStarterCategory(null); }}
+                <button 
+                  onClick={() => { setModalTab('glossary'); setSelectedStarterCategory(null); setShowAdvancedIdeas(false); }}
                  className={`flex-1 min-w-[150px] py-4 font-black rounded-2xl text-lg flex items-center justify-center gap-2 transition-all ${modalTab === 'glossary' ? 'bg-white text-slate-800 shadow-sm border-b-4 border-green-500' : 'text-slate-500 hover:bg-slate-200'}`}
                >
                  <BookOpen size={20} /> Wörter-Glossar
@@ -1264,7 +1272,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                          </button>
                        )}
 
-                       {guidedSnippet && (
+                       {guidedSnippet && showMiniSnippet && (
                          <button
                            onClick={() => { insertText(` ${guidedSnippet} `); closeModal(); }}
                            className="w-full text-left p-5 mb-5 bg-indigo-50 border-4 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-100 rounded-2xl transition-all"
@@ -1274,14 +1282,21 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                          </button>
                        )}
 
-                       {contentIdeas.coachTip && (
+                       <button
+                         onClick={() => setShowAdvancedIdeas(prev => !prev)}
+                         className="mb-6 bg-slate-100 hover:bg-slate-200 text-slate-700 border-2 border-slate-200 px-4 py-2 rounded-xl font-bold text-sm"
+                       >
+                         {showAdvancedIdeas ? 'Weniger Hilfe anzeigen' : 'Mehr Hilfe anzeigen'}
+                       </button>
+
+                       {showAdvancedIdeas && contentIdeas.coachTip && (
                          <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-4 mb-5">
                            <div className="text-[11px] font-black uppercase tracking-widest text-emerald-700 mb-1">Coach-Tipp</div>
                            <p className="text-emerald-900 font-semibold">{contentIdeas.coachTip}</p>
                          </div>
                        )}
 
-                       {contentIdeas.avoid && contentIdeas.avoid.length > 0 && (
+                       {showAdvancedIdeas && contentIdeas.avoid && contentIdeas.avoid.length > 0 && (
                          <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-4 mb-6">
                            <div className="text-[11px] font-black uppercase tracking-widest text-rose-700 mb-2">Lieber vermeiden</div>
                            <ul className="space-y-1 text-rose-900 text-sm font-semibold">
@@ -1293,7 +1308,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                        )}
                        
                        <div className="grid grid-cols-1 gap-4">
-                         {contentIdeas.items.length > 0 ? contentIdeas.items.map((item, idx) => (
+                         {compactIdeaItems.length > 0 ? compactIdeaItems.map((item, idx) => (
                            <button
                              key={idx}
                              onClick={() => { insertText(` ${item} `); closeModal(); }}
@@ -1308,6 +1323,12 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                            </div>
                          )}
                        </div>
+
+                       {contentIdeas.items.length > compactIdeaItems.length && (
+                         <p className="text-xs text-amber-800 mt-4 font-semibold">
+                           Es gibt noch mehr Ideen - wechselt die Karte oder klickt auf "Mehr Hilfe", um tiefer zu arbeiten.
+                         </p>
+                       )}
                     </div>
                  </div>
                )}
