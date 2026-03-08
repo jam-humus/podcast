@@ -704,7 +704,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   const passedReadinessChecks = readinessChecks.filter(check => check.passed).length;
 
   return (
-    <div className="h-screen flex flex-col bg-slate-100 font-sans selection:bg-yellow-200">
+    <div className="min-h-screen md:h-screen flex flex-col bg-slate-100 font-sans selection:bg-yellow-200">
       
       {newBadge && <BadgeToast badge={newBadge} onClose={() => setNewBadge(null)} />}
 
@@ -756,7 +756,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
       </div>
 
       {/* --- MAIN LAYOUT (3 Columns) --- */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-y-auto md:overflow-hidden">
         
         {/* COLUMN 1: NAVIGATION (Storyboard Filmstrip) */}
         {!simpleMode && (
@@ -791,7 +791,7 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
         )}
 
         {/* COLUMN 2: EDITOR (Main Stage) */}
-        <div className="flex-1 flex flex-col min-w-0 bg-slate-100 relative">
+        <div className="flex-1 flex flex-col min-w-0 bg-slate-100 relative overflow-y-auto">
            
            <div className="flex-1 p-4 md:p-6 flex flex-col h-full max-w-4xl mx-auto w-full">
              <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 mb-4 shadow-sm">

@@ -159,7 +159,12 @@ export default function App() {
         ...TOPICS[project.topicId],
         simpleTitle: "Das Grundgesetz",
         icon: "📜",
-        lesson: GENERAL_INTRO 
+        lesson: GENERAL_INTRO,
+        helpPlan: [
+          "Sag laut, wenn etwas unfair oder verletzend ist.",
+          "Bleib nicht allein - such dir Kinder oder Erwachsene dazu.",
+          "Hol Hilfe bei Lehrkraft, Eltern oder einer Vertrauensperson."
+        ]
     };
     return (
         <LessonView 

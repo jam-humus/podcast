@@ -188,6 +188,7 @@ export const TOPICS: Record<RightId, PodcastTopic> = {
     exampleIdeas: ["Jemand wird ausgelacht wegen Kleidung.", "Jemand wird ausgeschlossen.", "Ein peinliches Foto wird herumgezeigt."],
     boundaryIdeas: ["‘Nur Spaß’ gilt nicht, wenn jemand verletzt ist.", "Bloßstellen ist verboten.", "Jemanden 'Opfer' nennen verletzt die Würde."],
     schoolTips: ["Wir sagen laut Stopp!", "Wir lachen niemanden aus.", "Wir holen Hilfe."],
+    helpPlan: ["Sag klar: 'Stopp, das ist gemein.'", "Beende Chat/Video und sichere dich (weggehen, melden, löschen).", "Hol eine erwachsene Vertrauensperson dazu."],
     sentenceStarters: { hook: COMMON_HOOKS, intro: COMMON_INTROS, outro: COMMON_OUTROS, tip: COMMON_TIPS, explanation: COMMON_EXPLANATIONS, example: COMMON_EXAMPLES, boundary: COMMON_BOUNDARIES },
     wordBank: [
       { word: "Respekt", definition: "Andere freundlich und höflich behandeln." },
@@ -256,6 +257,7 @@ export const TOPICS: Record<RightId, PodcastTopic> = {
     exampleIdeas: ["Jemand schubst oder kneift.", "Ungewollte Umarmung.", "Mütze wegnehmen."],
     boundaryIdeas: ["Deine Freiheit endet dort, wo sie anderen wehtut.", "Regeln schützen uns.", "Stopp akzeptieren."],
     schoolTips: ["Wir akzeptieren ein 'Nein' sofort.", "Wir fragen vor dem Umarmen.", "Wir klären Streit mit Worten."],
+    helpPlan: ["Sag laut und deutlich: 'Nein, Stopp!'.", "Geh aus der Situation raus und stell dich zu anderen Kindern.", "Hol Hilfe bei Lehrkraft oder Vertrauensperson."],
     sentenceStarters: { hook: COMMON_HOOKS, intro: COMMON_INTROS, outro: COMMON_OUTROS, tip: COMMON_TIPS, explanation: COMMON_EXPLANATIONS, example: COMMON_EXAMPLES, boundary: COMMON_BOUNDARIES },
     wordBank: [
         { word: "Freiheit", definition: "Tun können, was man möchte (solange man niemanden stört)." },
@@ -313,6 +315,7 @@ export const TOPICS: Record<RightId, PodcastTopic> = {
     exampleIdeas: ["Mädchen dürfen nicht mitspielen.", "Rollstuhlfahrer kommt nicht rein.", "Ausgrenzung wegen Sprache."],
     boundaryIdeas: ["Ausgrenzen ist nie okay.", "Gerecht heißt manchmal auch: helfen.", "Niemand ist 'besser'."],
     schoolTips: ["Wir lassen alle mitspielen.", "Wir wählen Teams fair.", "Wir helfen einander."],
+    helpPlan: ["Sprich die Ausgrenzung an: 'So reden wir hier nicht.'", "Hol die betroffene Person aktiv dazu (mitspielen lassen).", "Wenn es weitergeht: Erwachsene informieren."],
     sentenceStarters: { hook: COMMON_HOOKS, intro: COMMON_INTROS, outro: COMMON_OUTROS, tip: COMMON_TIPS, explanation: COMMON_EXPLANATIONS, example: COMMON_EXAMPLES, boundary: COMMON_BOUNDARIES },
     wordBank: [
         { word: "fair", definition: "Gerecht spielen." },
@@ -370,6 +373,7 @@ export const TOPICS: Record<RightId, PodcastTopic> = {
     exampleIdeas: ["Kritik äußern.", "Beleidigung vs Meinung.", "Sich nicht trauen was zu sagen."],
     boundaryIdeas: ["Lügen sind verboten.", "Beleidigung verletzt die Ehre.", "Hass ist keine Meinung."],
     schoolTips: ["Wir sagen 'Ich finde...' statt 'Du bist...'", "Wir lassen ausreden.", "Wir prüfen Wahrheiten."],
+    helpPlan: ["Sag ruhig deine Meinung mit 'Ich finde...'.", "Keine Beleidigungen oder Gerüchte teilen.", "Bei Streit im Chat: pausieren und erwachsene Hilfe holen."],
     sentenceStarters: { hook: COMMON_HOOKS, intro: COMMON_INTROS, outro: COMMON_OUTROS, tip: COMMON_TIPS, explanation: COMMON_EXPLANATIONS, example: COMMON_EXAMPLES, boundary: COMMON_BOUNDARIES },
     wordBank: [
         { word: "Meinung", definition: "Das, was du denkst." },
@@ -437,6 +441,7 @@ export const TOPICS: Record<RightId, PodcastTopic> = {
     exampleIdeas: ["Neues Kind in der Klasse.", "Familie auf der Flucht.", "Angst vor Polizei."],
     boundaryIdeas: ["Keine Vorurteile.", "Herkunft ist egal.", "Nicht ständig nach schlimmen Dingen fragen."],
     schoolTips: ["Wir sind Paten.", "Wir erklären mit Händen und Füßen.", "Wir sind freundlich."],
+    helpPlan: ["Begrüße neue Kinder freundlich und langsam.", "Erkläre Regeln einfach oder mit Gesten.", "Wenn jemand ausgegrenzt wird: sofort Unterstützung holen."],
     sentenceStarters: { hook: COMMON_HOOKS, intro: COMMON_INTROS, outro: COMMON_OUTROS, tip: COMMON_TIPS, explanation: COMMON_EXPLANATIONS, example: COMMON_EXAMPLES, boundary: COMMON_BOUNDARIES },
     wordBank: [
         { word: "Schutz", definition: "In Sicherheit sein." },
