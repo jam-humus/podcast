@@ -51,7 +51,7 @@ const CARD_HELPERS: Record<CardType, { title: string; checklist: string[]; icon:
   },
   boundary: {
     title: "Die Grenze (Das Aber)",
-    icon: "gu",
+    icon: "🛑",
     checklist: [
       "Wann hört dieses Recht auf?",
       "Darf man wirklich ALLES machen? (Nein!)",
@@ -77,6 +77,14 @@ const CARD_HELPERS: Record<CardType, { title: string; checklist: string[]; icon:
     ]
   }
 };
+
+const SCRIPT_READINESS_GUIDE = [
+  "Können wir in 1-2 Sätzen erklären, was das Grundrecht bedeutet?",
+  "Haben wir ein echtes Beispiel aus Schule oder Alltag eingebaut?",
+  "Sagen wir klar, wo die Grenze ist (Stopp-Regel)?",
+  "Geben wir mindestens einen konkreten Hilfe-Tipp?",
+  "Klingt unser Text wie gesprochene Sprache (kurze, klare Sätze)?"
+];
 
 // --- SPEAKER ROLE TIPS ---
 const SPEAKER_TIPS: Record<CardType, { [key: string]: string }> = {
@@ -671,6 +679,30 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
   const activeCardChecks = analyzeCardQuality(activeCard);
   const missingChecks = activeCardChecks.filter(check => !check.passed);
 
+  const explanationCard = cards.find(card => card.type === 'explanation');
+  const exampleCard = cards.find(card => card.type === 'example');
+  const boundaryCard = cards.find(card => card.type === 'boundary');
+  const tipCard = cards.find(card => card.type === 'tip');
+
+  const hasClearExplanation = explanationCard ? analyzeCardQuality(explanationCard).every(check => check.passed) : false;
+  const hasRealExample = exampleCard ? analyzeCardQuality(exampleCard).every(check => check.passed) : false;
+  const hasBoundaryRule = boundaryCard ? analyzeCardQuality(boundaryCard).every(check => check.passed) : false;
+  const hasActionTip = tipCard ? analyzeCardQuality(tipCard).every(check => check.passed) : false;
+  const hasKidFriendlyLanguage = cards.filter(card => card.text.trim().length > 0).every(card => {
+    const sentenceCount = card.text.split(/[.!?]/).filter(Boolean).length || 1;
+    const words = countWords(card.text);
+    return (words / sentenceCount) <= 18;
+  });
+
+  const readinessChecks = [
+    { label: SCRIPT_READINESS_GUIDE[0], passed: hasClearExplanation },
+    { label: SCRIPT_READINESS_GUIDE[1], passed: hasRealExample },
+    { label: SCRIPT_READINESS_GUIDE[2], passed: hasBoundaryRule },
+    { label: SCRIPT_READINESS_GUIDE[3], passed: hasActionTip },
+    { label: SCRIPT_READINESS_GUIDE[4], passed: hasKidFriendlyLanguage }
+  ];
+  const passedReadinessChecks = readinessChecks.filter(check => check.passed).length;
+
   return (
     <div className="h-screen flex flex-col bg-slate-100 font-sans selection:bg-yellow-200">
       
@@ -709,6 +741,9 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                ))}
              </select>
            </label>
+           <div className={`px-3 py-2 rounded-xl border-2 text-xs font-black uppercase tracking-wider ${passedReadinessChecks >= 4 ? 'bg-green-100 text-green-800 border-green-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
+             Skript-Check {passedReadinessChecks}/5
+           </div>
            <ScoreBoard score={score} recentGain={recentScoreGain} />
            <TimeTracker totalWords={totalWords} />
            <button 
@@ -987,6 +1022,19 @@ export const ScriptBuilder = ({ project, topic, onUpdateScript, onFinish, onBack
                <ul className="list-disc ml-3 space-y-2">
                  {topic.exampleIdeas.map((t,i) => <li key={i} className="font-medium">{t}</li>)}
                </ul>
+             </InfoBox>
+
+             <InfoBox title="Wissens-Check vorm Aufnehmen" icon="🧭" color="border-emerald-200 bg-emerald-50">
+               <ul className="space-y-2">
+                 {readinessChecks.map((check, idx) => (
+                   <li key={idx} className={`rounded-lg px-2 py-1 border text-xs font-semibold ${check.passed ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-emerald-100 text-slate-700'}`}>
+                     <span className="mr-1">{check.passed ? '✅' : '⬜'}</span>{check.label}
+                   </li>
+                 ))}
+               </ul>
+               <p className="text-[11px] text-emerald-700 font-bold mt-3">
+                 Ziel: mindestens 4 von 5 Häkchen, dann ist euer Skript meist gut verständlich.
+               </p>
              </InfoBox>
            </div>
         </div>
