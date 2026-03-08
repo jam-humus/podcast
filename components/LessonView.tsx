@@ -204,26 +204,6 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
   // Stable Score Display: Base Project Score + Session Earnings
   const displayedScore = project.score + sessionScore;
   const discussionPrompts = [
-    {
-      title: '1) Verstehen',
-      prompt: `Erklärt das Recht mit eigenen Worten: „${topic.keySentence}“`,
-      support: `Nutzt mindestens 2 Begriffe aus der Wortbank (z. B. ${topic.wordBank.slice(0, 2).map(w => w.word).join(', ') || 'Recht, Grenze'}).`
-    },
-    {
-      title: '2) Erkennen',
-      prompt: `Wo seht ihr das Recht im Alltag? (${topic.exampleIdeas[0] ?? 'Nennt ein eigenes Beispiel aus Schule/Freizeit.'})`,
-      support: 'Sammelt 2 Situationen: eine faire und eine schwierige.'
-    },
-    {
-      title: '3) Abwägen',
-      prompt: `Wo endet das Recht? (${topic.boundaryIdeas[0] ?? 'Welche Grenze schützt alle?'})`,
-      support: 'Begründet eure Regel mit „weil …“.'
-    },
-    {
-      title: '4) Handeln',
-      prompt: `Was ist euer Klassen-Plan bei Verletzungen dieses Rechts? (${topic.helpPlan[0] ?? 'Plant 2 konkrete Schritte.'})`,
-      support: 'Formuliert einen Merksatz für euren Podcast.'
-    },
   ];
 
   return (
@@ -264,15 +244,6 @@ export const LessonView = ({ project, topic, mode, onCompleteLesson, onBack }: P
              </div>
 
              <div className="bg-amber-50 border-4 border-amber-100 rounded-3xl p-5 mb-8">
-               <h3 className="text-amber-800 font-black text-lg mb-3">💬 Gruppenstart: Recht kennenlernen (8–10 Minuten)</h3>
-               <p className="text-amber-900 font-semibold mb-3">
-                 Rollen in der Gruppe: Moderator:in, Zeitwächter:in, Schreiber:in, Sprecher:in. Ziel: Zu jedem Schritt ein Stichwort notieren.
-               </p>
-               <ul className="space-y-3 text-amber-900">
-                 {discussionPrompts.map((item, idx) => (
-                   <li key={idx} className="bg-white/90 rounded-xl px-3 py-3 border border-amber-100">
-                     <p className="font-black">{item.title}: {item.prompt}</p>
-                     <p className="font-semibold text-sm mt-1">➜ Auftrag: {item.support}</p>
                    </li>
                  ))}
                </ul>
